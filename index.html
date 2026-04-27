@@ -159,7 +159,7 @@ html, body { height: 100%; background: var(--surface2); font-family: -apple-syst
     <div class="header-top">
       <div>
         <h1>سجل الحيازات الزراعية</h1>
-        <div class="header-sub" id="header-sub">جاري التحميل...</div>
+        <div class="header-sub" id="header-sub">جاري التحميل من جوجل...</div>
       </div>
       <div class="header-btns">
         <button class="btn-excel" onclick="openExcelModal()">📊 إكسيل</button>
@@ -191,11 +191,23 @@ html, body { height: 100%; background: var(--surface2); font-family: -apple-syst
 <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)" />
 
 <script>
-let db = JSON.parse(localStorage.getItem('hiyazat_v2') || '[]');
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4H9xj3Ck71vcuGW9g7J1mmVxwhV6V37nfSolb-KaRGGgeNGBfNsv90DgVae2lW9yQog/exec';
+let db = [];
 let sortBy = null, sortDir = 1, editId = null;
 let importPreviewData = [];
 
-function save() { localStorage.setItem('hiyazat_v2', JSON.stringify(db)); }
+// تحميل البيانات من جوجل شيت عند فتح البرنامج
+async function loadData() {
+  try {
+    const response = await fetch(SCRIPT_URL);
+    db = await response.json();
+    renderList();
+  } catch(error) {
+    document.getElementById('header-sub').textContent = 'خطأ في الاتصال بالانترنت';
+  }
+}
+window.onload = loadData;
+
 function areaToFeddan(f,q,s){ return (parseFloat(f)||0)+(parseFloat(q)||0)/24+(parseFloat(s)||0)/576; }
 function fmtArea(f,q,s){ let p=[]; if(+f)p.push(f+' فدان'); if(+q)p.push(q+' قيراط'); if(+s)p.push(s+' سهم'); return p.length?p.join(' '):'—'; }
 function fmtTotal(f,q,s){ return areaToFeddan(f,q,s).toFixed(3); }
@@ -212,7 +224,7 @@ function updateStats(){
 function getFiltered(){
   const q=(document.getElementById('search-input').value||'').trim().toLowerCase();
   let list=db.slice();
-  if(q) list=list.filter(r=>r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)||(r.basin||'').toLowerCase().includes(q));
+  if(q) list=list.filter(r=>r.name.toLowerCase().includes(q)||String(r.id).toLowerCase().includes(q)||(r.basin||'').toLowerCase().includes(q));
   if(sortBy==='name') list.sort((a,b)=>sortDir*a.name.localeCompare(b.name,'ar'));
   if(sortBy==='area') list.sort((a,b)=>sortDir*(areaToFeddan(a.feddan,a.qirat,a.sahm)-areaToFeddan(b.feddan,b.qirat,b.sahm)));
   return list;
@@ -229,7 +241,7 @@ function renderList(){
   const wrap=document.getElementById('list-wrap');
   const list=getFiltered();
   updateStats();
-  if(!list.length){ wrap.innerHTML='<div class="empty-state">🌾<br>لا توجد نتائج<br><span style="font-size:13px">اضغط + إضافة لإنشاء أول حيازة</span></div>'; return; }
+  if(!list.length){ wrap.innerHTML='<div class="empty-state">🌾<br>لا توجد بيانات مسجلة<br><span style="font-size:13px">اضغط + إضافة لإنشاء أول حيازة</span></div>'; return; }
   wrap.innerHTML=list.map(r=>`
     <div class="record-item" onclick="openDetail('${r.id}')">
       <div class="rec-top"><span class="rec-name">${r.name}</span><span class="rec-id">#${r.id}</span></div>
@@ -281,22 +293,41 @@ function showFormModal(rec){
   setTimeout(()=>{ const n=document.getElementById('f-name'); if(n&&!isEdit)n.focus(); },300);
 }
 
-function saveRecord(){
+// حفظ البيانات في جوجل شيت
+async function saveRecord(){
   const id=document.getElementById('f-id').value.trim();
   const name=document.getElementById('f-name').value.trim();
   const basin=document.getElementById('f-basin').value.trim();
   const feddan=document.getElementById('f-fed').value||'0';
   const qirat=document.getElementById('f-qir').value||'0';
   const sahm=document.getElementById('f-sahm').value||'0';
+  
   if(!name||!basin){ toast('⚠️ يرجى تعبئة الاسم والحوض'); return; }
+  
+  const record = {id, name, basin, feddan, qirat, sahm, created: new Date().toISOString()};
+
   if(!editId){
     if(db.find(r=>r.id===id)){ toast('⚠️ رقم الحيازة موجود مسبقاً'); return; }
-    db.push({id,name,basin,feddan,qirat,sahm,created:new Date().toISOString()});
+    db.push(record);
   } else {
     const idx=db.findIndex(r=>r.id===editId);
-    db[idx]={...db[idx],name,basin,feddan,qirat,sahm,updated:new Date().toISOString()};
+    record.created = db[idx].created;
+    db[idx]=record;
   }
-  save(); closeModal(); renderList(); toast(editId?'✓ تم التعديل':'✓ تمت الإضافة');
+  
+  closeModal(); 
+  renderList(); 
+  toast('جاري الحفظ في السحابة...');
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'save', record: record })
+    });
+    toast(editId?'✓ تم التعديل بنجاح':'✓ تمت الإضافة بنجاح');
+  } catch (error) {
+    toast('❌ حدث خطأ في الاتصال بقاعدة البيانات');
+  }
 }
 
 function openAdd(){ editId=null; showFormModal(null); }
@@ -364,7 +395,24 @@ function confirmDelete(id){
     </div>`;
 }
 
-function deleteRecord(id){ db=db.filter(r=>r.id!==id); save(); closeModal(); renderList(); toast('تم الحذف'); }
+// حذف البيانات من جوجل شيت
+async function deleteRecord(id){ 
+  db=db.filter(r=>r.id!==id); 
+  closeModal(); 
+  renderList(); 
+  toast('جاري الحذف من السحابة...');
+  
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete', id: id })
+    });
+    toast('✓ تم الحذف نهائياً');
+  } catch (error) {
+    toast('❌ حدث خطأ أثناء الحذف');
+  }
+}
+
 function closeModal(){ document.getElementById('modal-root').innerHTML=''; importPreviewData=[]; }
 function bgClose(e){ if(e.target.classList.contains('modal-backdrop')) closeModal(); }
 
@@ -380,12 +428,8 @@ function downloadTemplate(){
   const wsData = [headerRow, ...sampleData];
   const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-  // Column widths
-  ws['!cols'] = [
-    {wch:14},{wch:24},{wch:22},{wch:8},{wch:8},{wch:8}
-  ];
+  ws['!cols'] = [{wch:14},{wch:24},{wch:22},{wch:8},{wch:8},{wch:8}];
 
-  // Style header row (bold + green background)
   const range = XLSX.utils.decode_range(ws['!ref']);
   for(let C=range.s.c; C<=range.e.c; C++){
     const addr = XLSX.utils.encode_cell({r:0, c:C});
@@ -419,7 +463,6 @@ function exportAll(){
   toast(`✓ تم تصدير ${db.length} حيازة`);
 }
 
-// Column name mappings (Arabic & English)
 const COL_MAP = {
   id:     ['رقم الحيازة','رقم','id','رقم_الحيازة','رقم حيازه'],
   name:   ['اسم الحائز','اسم','name','الاسم','اسم_الحائز','اسم حائز'],
@@ -473,7 +516,7 @@ function processImportRows(rows){
 
   for(let i=1;i<rows.length;i++){
     const row=rows[i];
-    if(row.every(c=>String(c).trim()==='')) continue; // skip empty rows
+    if(row.every(c=>String(c).trim()==='')) continue; 
     const name = String(row[colName]||'').trim();
     const basin = String(row[colBasin]||'').trim();
     const feddan = String(row[colFed]>=0?row[colFed]||0:0);
@@ -561,21 +604,33 @@ function updateImportBtn(){
   btn.textContent = valid>0?`✓ استيراد ${valid} حيازة`:'لا توجد بيانات صالحة';
 }
 
-function confirmImport(){
+// استيراد بيانات من الإكسيل وارسالها لجوجل شيت
+async function confirmImport(){
   if(!importPreviewData.length) return;
   let added=0, updated=0;
-  importPreviewData.forEach(r=>{
-    if(r.status==='skip') return;
+  toast('جاري الاستيراد والحفظ في السحابة... يرجى الانتظار');
+  
+  for (const r of importPreviewData) {
+    if(r.status==='skip') continue;
+    const record = {id:r.id, name:r.name, basin:r.basin, feddan:r.feddan, qirat:r.qirat, sahm:r.sahm, created:new Date().toISOString()};
+    
     if(r.status==='new'){
-      db.push({id:r.id,name:r.name,basin:r.basin,feddan:r.feddan,qirat:r.qirat,sahm:r.sahm,created:new Date().toISOString()});
-      added++;
+      db.push(record); added++;
     } else {
       const idx=db.findIndex(x=>x.id===r.id);
-      if(idx>=0){ db[idx]={...db[idx],name:r.name,basin:r.basin,feddan:r.feddan,qirat:r.qirat,sahm:r.sahm,updated:new Date().toISOString()}; updated++; }
+      if(idx>=0){ db[idx]=record; updated++; }
     }
-  });
-  save(); closeModal(); renderList();
-  toast(`✓ تمت الإضافة: ${added} | التحديث: ${updated}`);
+
+    try {
+      await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', record: record }) });
+    } catch(e) {
+      console.error('Error saving record', record.id);
+    }
+  }
+  
+  closeModal(); 
+  renderList();
+  toast(`✓ اكتملت العملية. إضافة: ${added} | تحديث: ${updated}`);
 }
 
 function openExcelModal(){
@@ -588,8 +643,6 @@ function openExcelModal(){
           <button class="modal-close" onclick="closeModal()">✕</button>
         </div>
         <div class="modal-body">
-
-          <!-- Import Section -->
           <div class="excel-section">
             <div class="excel-section-title">📥 استيراد من إكسيل</div>
             <div class="excel-section-desc">ارفع ملف Excel يحتوي على بيانات الحيازات.<br>النظام سيتعرف تلقائياً على الأعمدة ويعرض معاينة قبل الاستيراد.</div>
@@ -611,20 +664,17 @@ function openExcelModal(){
             <button class="btn-import-confirm" id="btn-import-confirm" disabled onclick="confirmImport()">استيراد</button>
           </div>
 
-          <!-- Template Download -->
           <div class="excel-section">
             <div class="excel-section-title">📄 تنزيل النموذج</div>
             <div class="excel-section-desc">تنزيل ملف Excel فارغ بالتنسيق الصحيح لملء البيانات.</div>
             <button class="btn-download-template" onclick="downloadTemplate()">⬇️ تنزيل نموذج Excel</button>
           </div>
 
-          <!-- Export Section -->
           <div class="excel-section">
             <div class="excel-section-title">📤 تصدير البيانات</div>
-            <div class="excel-section-desc">تصدير جميع الحيازات المسجلة (${db.length} حيازة) إلى ملف Excel.</div>
+            <div class="excel-section-desc">تصدير جميع الحيازات المسجلة إلى ملف Excel.</div>
             <button class="btn-download-template" onclick="exportAll()" style="background:var(--blue-light);color:var(--blue);border-color:var(--blue)">⬆️ تصدير كل الحيازات</button>
           </div>
-
         </div>
       </div>
     </div>`;
@@ -641,17 +691,6 @@ function handleDrop(e){
   }).catch(err=>updateImportPreview('خطأ: '+err.message,null));
 }
 
-// Sample data
-if(!db.length){
-  db=[
-    {id:'0001',name:'أحمد محمد علي',basin:'حوض النيل الغربي',feddan:'3',qirat:'12',sahm:'0',created:'2024-01-15T10:00:00Z'},
-    {id:'0002',name:'فاطمة حسن إبراهيم',basin:'حوض الشرقية',feddan:'1',qirat:'18',sahm:'6',created:'2024-02-10T10:00:00Z'},
-    {id:'0003',name:'محمود عبد الرحمن',basin:'حوض النيل الغربي',feddan:'5',qirat:'0',sahm:'12',created:'2024-03-05T10:00:00Z'},
-    {id:'0004',name:'سمية خالد مصطفى',basin:'حوض القناة',feddan:'2',qirat:'6',sahm:'0',created:'2024-04-01T10:00:00Z'},
-  ];
-  save();
-}
-renderList();
 </script>
 </body>
 </html>

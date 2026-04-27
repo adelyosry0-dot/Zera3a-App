@@ -12,21 +12,21 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 :root {
-  --green: #3B6D11; --green-light: #EAF3DE; --green-mid: #639922;
-  --amber: #BA7517; --amber-light: #FAEEDA;
-  --red: #A32D2D; --red-light: #FCEBEB;
-  --blue: #185FA5; --blue-light: #E6F1FB;
-  --surface: #ffffff; --surface2: #f5f5f0;
-  --border: rgba(0,0,0,0.12); --text: #1a1a1a; --muted: #666;
-  --radius: 10px; --radius-lg: 16px;
+  --green: #3B6D11; --green-light: #EAF3DE; --green-mid: #639922;
+  --amber: #BA7517; --amber-light: #FAEEDA;
+  --red: #A32D2D; --red-light: #FCEBEB;
+  --blue: #185FA5; --blue-light: #E6F1FB;
+  --surface: #ffffff; --surface2: #f5f5f0;
+  --border: rgba(0,0,0,0.12); --text: #1a1a1a; --muted: #666;
+  --radius: 10px; --radius-lg: 16px;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
-    --surface: #1c1c1e; --surface2: #2c2c2e;
-    --border: rgba(255,255,255,0.12); --text: #f0f0f0; --muted: #aaa;
-    --green-light: #1a2e0a; --amber-light: #2a1e08;
-    --red-light: #2e0f0f; --blue-light: #0a1e35;
-  }
+  :root {
+    --surface: #1c1c1e; --surface2: #2c2c2e;
+    --border: rgba(255,255,255,0.12); --text: #f0f0f0; --muted: #aaa;
+    --green-light: #1a2e0a; --amber-light: #2a1e08;
+    --red-light: #2e0f0f; --blue-light: #0a1e35;
+  }
 }
 html, body { height: 100%; background: var(--surface2); font-family: -apple-system, 'Segoe UI', Arial, sans-serif; color: var(--text); }
 #app { max-width: 480px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; background: var(--surface2); }
@@ -155,37 +155,37 @@ html, body { height: 100%; background: var(--surface2); font-family: -apple-syst
 </head>
 <body>
 <div id="app">
-  <div class="header">
-    <div class="header-top">
-      <div>
-        <h1>سجل الحيازات الزراعية</h1>
-        <div class="header-sub" id="header-sub">جاري التحميل...</div>
-      </div>
-      <div class="header-btns">
-        <button class="btn-excel" onclick="openExcelModal()">📊 إكسيل</button>
-        <button class="btn-add" onclick="openAdd()">+ إضافة</button>
-      </div>
-    </div>
-  </div>
-  <div class="toolbar">
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input type="search" id="search-input" placeholder="بحث بالاسم أو الرقم أو الحوض..." oninput="renderList()" />
-    </div>
-    <button class="sort-btn" id="sort-name-btn" onclick="toggleSort('name')">الاسم</button>
-    <button class="sort-btn" id="sort-area-btn" onclick="toggleSort('area')">المساحة</button>
-  </div>
-  <div class="stats-bar">
-    <div class="stat-card">
-      <div class="stat-label">إجمالي السجلات</div>
-      <div class="stat-val" id="stat-count">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">إجمالي المساحة (فدان)</div>
-      <div class="stat-val" id="stat-area">0</div>
-    </div>
-  </div>
-  <div class="list-wrap" id="list-wrap"></div>
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <h1>سجل الحيازات الزراعية</h1>
+        <div class="header-sub" id="header-sub">جاري التحميل...</div>
+      </div>
+      <div class="header-btns">
+        <button class="btn-excel" onclick="openExcelModal()">📊 إكسيل</button>
+        <button class="btn-add" onclick="openAdd()">+ إضافة</button>
+      </div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="search" id="search-input" placeholder="بحث بالاسم أو الرقم أو الحوض..." oninput="renderList()" />
+    </div>
+    <button class="sort-btn" id="sort-name-btn" onclick="toggleSort('name')">الاسم</button>
+    <button class="sort-btn" id="sort-area-btn" onclick="toggleSort('area')">المساحة</button>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-label">إجمالي السجلات</div>
+      <div class="stat-val" id="stat-count">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">إجمالي المساحة (فدان)</div>
+      <div class="stat-val" id="stat-area">0</div>
+    </div>
+  </div>
+  <div class="list-wrap" id="list-wrap"></div>
 </div>
 <div id="modal-root"></div>
 <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)" />
@@ -203,165 +203,165 @@ function genId(){ const m=db.reduce((a,r)=>Math.max(a,parseInt(r.id)||0),0); ret
 function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2600); }
 
 function updateStats(){
-  document.getElementById('stat-count').textContent=db.length;
-  const tot=db.reduce((a,r)=>a+areaToFeddan(r.feddan,r.qirat,r.sahm),0);
-  document.getElementById('stat-area').textContent=tot.toFixed(2);
-  document.getElementById('header-sub').textContent=db.length+' حيازة مسجلة';
+  document.getElementById('stat-count').textContent=db.length;
+  const tot=db.reduce((a,r)=>a+areaToFeddan(r.feddan,r.qirat,r.sahm),0);
+  document.getElementById('stat-area').textContent=tot.toFixed(2);
+  document.getElementById('header-sub').textContent=db.length+' حيازة مسجلة';
 }
 
 function getFiltered(){
-  const q=(document.getElementById('search-input').value||'').trim().toLowerCase();
-  let list=db.slice();
-  if(q) list=list.filter(r=>r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)||(r.basin||'').toLowerCase().includes(q));
-  if(sortBy==='name') list.sort((a,b)=>sortDir*a.name.localeCompare(b.name,'ar'));
-  if(sortBy==='area') list.sort((a,b)=>sortDir*(areaToFeddan(a.feddan,a.qirat,a.sahm)-areaToFeddan(b.feddan,b.qirat,b.sahm)));
-  return list;
+  const q=(document.getElementById('search-input').value||'').trim().toLowerCase();
+  let list=db.slice();
+  if(q) list=list.filter(r=>r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)||(r.basin||'').toLowerCase().includes(q));
+  if(sortBy==='name') list.sort((a,b)=>sortDir*a.name.localeCompare(b.name,'ar'));
+  if(sortBy==='area') list.sort((a,b)=>sortDir*(areaToFeddan(a.feddan,a.qirat,a.sahm)-areaToFeddan(b.feddan,b.qirat,b.sahm)));
+  return list;
 }
 
 function toggleSort(key){
-  sortBy===key? sortDir*=-1 : (sortBy=key, sortDir=1);
-  document.getElementById('sort-name-btn').classList.toggle('active',sortBy==='name');
-  document.getElementById('sort-area-btn').classList.toggle('active',sortBy==='area');
-  renderList();
+  sortBy===key? sortDir*=-1 : (sortBy=key, sortDir=1);
+  document.getElementById('sort-name-btn').classList.toggle('active',sortBy==='name');
+  document.getElementById('sort-area-btn').classList.toggle('active',sortBy==='area');
+  renderList();
 }
 
 function renderList(){
-  const wrap=document.getElementById('list-wrap');
-  const list=getFiltered();
-  updateStats();
-  if(!list.length){ wrap.innerHTML='<div class="empty-state">🌾<br>لا توجد نتائج<br><span style="font-size:13px">اضغط + إضافة لإنشاء أول حيازة</span></div>'; return; }
-  wrap.innerHTML=list.map(r=>`
-    <div class="record-item" onclick="openDetail('${r.id}')">
-      <div class="rec-top"><span class="rec-name">${r.name}</span><span class="rec-id">#${r.id}</span></div>
-      <div class="rec-meta">
-        <span class="badge badge-green">${fmtArea(r.feddan,r.qirat,r.sahm)}</span>
-        <span class="badge badge-amber">${r.basin||'—'}</span>
-      </div>
-    </div>`).join('');
+  const wrap=document.getElementById('list-wrap');
+  const list=getFiltered();
+  updateStats();
+  if(!list.length){ wrap.innerHTML='<div class="empty-state">🌾<br>لا توجد نتائج<br><span style="font-size:13px">اضغط + إضافة لإنشاء أول حيازة</span></div>'; return; }
+  wrap.innerHTML=list.map(r=>`
+    <div class="record-item" onclick="openDetail('${r.id}')">
+      <div class="rec-top"><span class="rec-name">${r.name}</span><span class="rec-id">#${r.id}</span></div>
+      <div class="rec-meta">
+        <span class="badge badge-green">${fmtArea(r.feddan,r.qirat,r.sahm)}</span>
+        <span class="badge badge-amber">${r.basin||'—'}</span>
+      </div>
+    </div>`).join('');
 }
 
 function showFormModal(rec){
-  const isEdit=!!rec;
-  document.getElementById('modal-root').innerHTML=`
-    <div class="modal-backdrop" onclick="bgClose(event)">
-      <div class="modal">
-        <div class="modal-handle"></div>
-        <div class="modal-header">
-          <span class="modal-title">${isEdit?'تعديل الحيازة':'إضافة حيازة جديدة'}</span>
-          <button class="modal-close" onclick="closeModal()">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="field-group">
-            <div class="field-label">رقم الحيازة</div>
-            <input class="field-input" id="f-id" type="text" value="${isEdit?rec.id:genId()}" ${isEdit?'readonly':''} />
-          </div>
-          <div class="field-group">
-            <div class="field-label">اسم الحائز *</div>
-            <input class="field-input" id="f-name" type="text" value="${isEdit?rec.name:''}" placeholder="الاسم الكامل للحائز" />
-          </div>
-          <div class="field-group">
-            <div class="field-label">اسم الحوض *</div>
-            <input class="field-input" id="f-basin" type="text" value="${isEdit?rec.basin:''}" placeholder="اسم الحوض الزراعي" />
-          </div>
-          <div class="field-group">
-            <div class="field-label">المساحة</div>
-            <div class="area-row">
-              <div><div class="area-unit">فدان</div><input class="field-input" id="f-fed" type="number" min="0" value="${isEdit?rec.feddan:0}" /></div>
-              <div><div class="area-unit">قيراط</div><input class="field-input" id="f-qir" type="number" min="0" max="23" value="${isEdit?rec.qirat:0}" /></div>
-              <div><div class="area-unit">سهم</div><input class="field-input" id="f-sahm" type="number" min="0" max="23" value="${isEdit?rec.sahm:0}" /></div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-secondary" onclick="closeModal()">إلغاء</button>
-          <button class="btn-primary" onclick="saveRecord()">✓ حفظ</button>
-        </div>
-      </div>
-    </div>`;
-  setTimeout(()=>{ const n=document.getElementById('f-name'); if(n&&!isEdit)n.focus(); },300);
+  const isEdit=!!rec;
+  document.getElementById('modal-root').innerHTML=`
+    <div class="modal-backdrop" onclick="bgClose(event)">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <span class="modal-title">${isEdit?'تعديل الحيازة':'إضافة حيازة جديدة'}</span>
+          <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="field-group">
+            <div class="field-label">رقم الحيازة</div>
+            <input class="field-input" id="f-id" type="text" value="${isEdit?rec.id:genId()}" ${isEdit?'readonly':''} />
+          </div>
+          <div class="field-group">
+            <div class="field-label">اسم الحائز *</div>
+            <input class="field-input" id="f-name" type="text" value="${isEdit?rec.name:''}" placeholder="الاسم الكامل للحائز" />
+          </div>
+          <div class="field-group">
+            <div class="field-label">اسم الحوض *</div>
+            <input class="field-input" id="f-basin" type="text" value="${isEdit?rec.basin:''}" placeholder="اسم الحوض الزراعي" />
+          </div>
+          <div class="field-group">
+            <div class="field-label">المساحة</div>
+            <div class="area-row">
+              <div><div class="area-unit">فدان</div><input class="field-input" id="f-fed" type="number" min="0" value="${isEdit?rec.feddan:0}" /></div>
+              <div><div class="area-unit">قيراط</div><input class="field-input" id="f-qir" type="number" min="0" max="23" value="${isEdit?rec.qirat:0}" /></div>
+              <div><div class="area-unit">سهم</div><input class="field-input" id="f-sahm" type="number" min="0" max="23" value="${isEdit?rec.sahm:0}" /></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" onclick="closeModal()">إلغاء</button>
+          <button class="btn-primary" onclick="saveRecord()">✓ حفظ</button>
+        </div>
+      </div>
+    </div>`;
+  setTimeout(()=>{ const n=document.getElementById('f-name'); if(n&&!isEdit)n.focus(); },300);
 }
 
 function saveRecord(){
-  const id=document.getElementById('f-id').value.trim();
-  const name=document.getElementById('f-name').value.trim();
-  const basin=document.getElementById('f-basin').value.trim();
-  const feddan=document.getElementById('f-fed').value||'0';
-  const qirat=document.getElementById('f-qir').value||'0';
-  const sahm=document.getElementById('f-sahm').value||'0';
-  if(!name||!basin){ toast('⚠️ يرجى تعبئة الاسم والحوض'); return; }
-  if(!editId){
-    if(db.find(r=>r.id===id)){ toast('⚠️ رقم الحيازة موجود مسبقاً'); return; }
-    db.push({id,name,basin,feddan,qirat,sahm,created:new Date().toISOString()});
-  } else {
-    const idx=db.findIndex(r=>r.id===editId);
-    db[idx]={...db[idx],name,basin,feddan,qirat,sahm,updated:new Date().toISOString()};
-  }
-  save(); closeModal(); renderList(); toast(editId?'✓ تم التعديل':'✓ تمت الإضافة');
+  const id=document.getElementById('f-id').value.trim();
+  const name=document.getElementById('f-name').value.trim();
+  const basin=document.getElementById('f-basin').value.trim();
+  const feddan=document.getElementById('f-fed').value||'0';
+  const qirat=document.getElementById('f-qir').value||'0';
+  const sahm=document.getElementById('f-sahm').value||'0';
+  if(!name||!basin){ toast('⚠️ يرجى تعبئة الاسم والحوض'); return; }
+  if(!editId){
+    if(db.find(r=>r.id===id)){ toast('⚠️ رقم الحيازة موجود مسبقاً'); return; }
+    db.push({id,name,basin,feddan,qirat,sahm,created:new Date().toISOString()});
+  } else {
+    const idx=db.findIndex(r=>r.id===editId);
+    db[idx]={...db[idx],name,basin,feddan,qirat,sahm,updated:new Date().toISOString()};
+  }
+  save(); closeModal(); renderList(); toast(editId?'✓ تم التعديل':'✓ تمت الإضافة');
 }
 
 function openAdd(){ editId=null; showFormModal(null); }
 function openEdit(id){ editId=id; showFormModal(db.find(r=>r.id===id)); closeModal(); }
 
 function openDetail(id){
-  const rec=db.find(r=>r.id===id); if(!rec)return;
-  const created=rec.created?new Date(rec.created).toLocaleDateString('ar-EG'):'—';
-  document.getElementById('modal-root').innerHTML=`
-    <div class="modal-backdrop" onclick="bgClose(event)">
-      <div class="modal">
-        <div class="modal-handle"></div>
-        <div class="modal-header">
-          <span class="modal-title">تفاصيل الحيازة</span>
-          <button class="modal-close" onclick="closeModal()">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="detail-hero">
-            <div class="detail-hero-id">رقم الحيازة: ${rec.id}</div>
-            <div class="detail-hero-name">${rec.name}</div>
-          </div>
-          <table class="detail-table">
-            <tr><td>اسم الحوض</td><td>${rec.basin||'—'}</td></tr>
-            <tr><td>الفدان</td><td>${rec.feddan||0}</td></tr>
-            <tr><td>القيراط</td><td>${rec.qirat||0}</td></tr>
-            <tr><td>السهم</td><td>${rec.sahm||0}</td></tr>
-            <tr><td>الإجمالي (فدان)</td><td>${fmtTotal(rec.feddan,rec.qirat,rec.sahm)}</td></tr>
-            <tr><td>تاريخ الإضافة</td><td>${created}</td></tr>
-          </table>
-          <div class="detail-actions">
-            <button class="btn-copy" onclick="copyRecord('${rec.id}')">📋 نسخ</button>
-            <button class="btn-edit" onclick="openEdit('${rec.id}')">✏️ تعديل</button>
-            <button class="btn-del" onclick="confirmDelete('${rec.id}')">🗑</button>
-          </div>
-        </div>
-      </div>
-    </div>`;
+  const rec=db.find(r=>r.id===id); if(!rec)return;
+  const created=rec.created?new Date(rec.created).toLocaleDateString('ar-EG'):'—';
+  document.getElementById('modal-root').innerHTML=`
+    <div class="modal-backdrop" onclick="bgClose(event)">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <span class="modal-title">تفاصيل الحيازة</span>
+          <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-hero">
+            <div class="detail-hero-id">رقم الحيازة: ${rec.id}</div>
+            <div class="detail-hero-name">${rec.name}</div>
+          </div>
+          <table class="detail-table">
+            <tr><td>اسم الحوض</td><td>${rec.basin||'—'}</td></tr>
+            <tr><td>الفدان</td><td>${rec.feddan||0}</td></tr>
+            <tr><td>القيراط</td><td>${rec.qirat||0}</td></tr>
+            <tr><td>السهم</td><td>${rec.sahm||0}</td></tr>
+            <tr><td>الإجمالي (فدان)</td><td>${fmtTotal(rec.feddan,rec.qirat,rec.sahm)}</td></tr>
+            <tr><td>تاريخ الإضافة</td><td>${created}</td></tr>
+          </table>
+          <div class="detail-actions">
+            <button class="btn-copy" onclick="copyRecord('${rec.id}')">📋 نسخ</button>
+            <button class="btn-edit" onclick="openEdit('${rec.id}')">✏️ تعديل</button>
+            <button class="btn-del" onclick="confirmDelete('${rec.id}')">🗑</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
 }
 
 function copyRecord(id){
-  const rec=db.find(r=>r.id===id);
-  const txt=`رقم الحيازة: ${rec.id}\nاسم الحائز: ${rec.name}\nالحوض: ${rec.basin}\nالمساحة: ${fmtArea(rec.feddan,rec.qirat,rec.sahm)} (${fmtTotal(rec.feddan,rec.qirat,rec.sahm)} فدان)`;
-  if(navigator.share){ navigator.share({title:'بيانات الحيازة',text:txt}).catch(()=>{}); }
-  else { navigator.clipboard.writeText(txt).then(()=>toast('✓ تم النسخ')).catch(()=>toast(txt)); }
+  const rec=db.find(r=>r.id===id);
+  const txt=`رقم الحيازة: ${rec.id}\nاسم الحائز: ${rec.name}\nالحوض: ${rec.basin}\nالمساحة: ${fmtArea(rec.feddan,rec.qirat,rec.sahm)} (${fmtTotal(rec.feddan,rec.qirat,rec.sahm)} فدان)`;
+  if(navigator.share){ navigator.share({title:'بيانات الحيازة',text:txt}).catch(()=>{}); }
+  else { navigator.clipboard.writeText(txt).then(()=>toast('✓ تم النسخ')).catch(()=>toast(txt)); }
 }
 
 function confirmDelete(id){
-  const rec=db.find(r=>r.id===id);
-  document.getElementById('modal-root').innerHTML=`
-    <div class="modal-backdrop">
-      <div class="modal">
-        <div class="modal-handle"></div>
-        <div class="modal-body">
-          <div class="confirm-box">
-            <div class="confirm-icon">⚠️</div>
-            <div class="confirm-title">تأكيد الحذف</div>
-            <div class="confirm-sub">هل أنت متأكد من حذف سجل<br><strong>${rec.name}</strong>؟<br>لا يمكن التراجع عن هذا الإجراء.</div>
-            <div class="confirm-btns">
-              <button class="btn-secondary" style="flex:1" onclick="openDetail('${id}')">رجوع</button>
-              <button class="btn-danger-outline" style="flex:1" onclick="deleteRecord('${id}')">🗑 حذف نهائياً</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>`;
+  const rec=db.find(r=>r.id===id);
+  document.getElementById('modal-root').innerHTML=`
+    <div class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-body">
+          <div class="confirm-box">
+            <div class="confirm-icon">⚠️</div>
+            <div class="confirm-title">تأكيد الحذف</div>
+            <div class="confirm-sub">هل أنت متأكد من حذف سجل<br><strong>${rec.name}</strong>؟<br>لا يمكن التراجع عن هذا الإجراء.</div>
+            <div class="confirm-btns">
+              <button class="btn-secondary" style="flex:1" onclick="openDetail('${id}')">رجوع</button>
+              <button class="btn-danger-outline" style="flex:1" onclick="deleteRecord('${id}')">🗑 حذف نهائياً</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
 }
 
 function deleteRecord(id){ db=db.filter(r=>r.id!==id); save(); closeModal(); renderList(); toast('تم الحذف'); }
@@ -371,285 +371,285 @@ function bgClose(e){ if(e.target.classList.contains('modal-backdrop')) closeModa
 // ========== EXCEL FUNCTIONS ==========
 
 function downloadTemplate(){
-  const wb = XLSX.utils.book_new();
-  const headerRow = ['رقم الحيازة','اسم الحائز','اسم الحوض','فدان','قيراط','سهم'];
-  const sampleData = [
-    ['0001','أحمد محمد علي','حوض النيل الغربي',3,12,0],
-    ['0002','فاطمة حسن إبراهيم','حوض الشرقية',1,18,6],
-  ];
-  const wsData = [headerRow, ...sampleData];
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  const headerRow = ['رقم الحيازة','اسم الحائز','اسم الحوض','فدان','قيراط','سهم'];
+  const sampleData = [
+    ['0001','أحمد محمد علي','حوض النيل الغربي',3,12,0],
+    ['0002','فاطمة حسن إبراهيم','حوض الشرقية',1,18,6],
+  ];
+  const wsData = [headerRow, ...sampleData];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-  // Column widths
-  ws['!cols'] = [
-    {wch:14},{wch:24},{wch:22},{wch:8},{wch:8},{wch:8}
-  ];
+  // Column widths
+  ws['!cols'] = [
+    {wch:14},{wch:24},{wch:22},{wch:8},{wch:8},{wch:8}
+  ];
 
-  // Style header row (bold + green background)
-  const range = XLSX.utils.decode_range(ws['!ref']);
-  for(let C=range.s.c; C<=range.e.c; C++){
-    const addr = XLSX.utils.encode_cell({r:0, c:C});
-    if(!ws[addr]) continue;
-    ws[addr].s = {
-      font:{bold:true, color:{rgb:'FFFFFF'}},
-      fill:{fgColor:{rgb:'3B6D11'}},
-      alignment:{horizontal:'center'}
-    };
-  }
+  // Style header row (bold + green background)
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for(let C=range.s.c; C<=range.e.c; C++){
+    const addr = XLSX.utils.encode_cell({r:0, c:C});
+    if(!ws[addr]) continue;
+    ws[addr].s = {
+      font:{bold:true, color:{rgb:'FFFFFF'}},
+      fill:{fgColor:{rgb:'3B6D11'}},
+      alignment:{horizontal:'center'}
+    };
+  }
 
-  XLSX.utils.book_append_sheet(wb, ws, 'الحيازات');
-  XLSX.writeFile(wb, 'نموذج_الحيازات.xlsx');
-  toast('✓ تم تنزيل النموذج');
+  XLSX.utils.book_append_sheet(wb, ws, 'الحيازات');
+  XLSX.writeFile(wb, 'نموذج_الحيازات.xlsx');
+  toast('✓ تم تنزيل النموذج');
 }
 
 function exportAll(){
-  if(!db.length){ toast('⚠️ لا توجد بيانات للتصدير'); return; }
-  const wb = XLSX.utils.book_new();
-  const headerRow = ['رقم الحيازة','اسم الحائز','اسم الحوض','فدان','قيراط','سهم','الإجمالي (فدان)','تاريخ الإضافة'];
-  const rows = db.map(r=>[
-    r.id, r.name, r.basin||'',
-    parseFloat(r.feddan)||0, parseFloat(r.qirat)||0, parseFloat(r.sahm)||0,
-    parseFloat(fmtTotal(r.feddan,r.qirat,r.sahm)),
-    r.created?new Date(r.created).toLocaleDateString('ar-EG'):''
-  ]);
-  const ws = XLSX.utils.aoa_to_sheet([headerRow,...rows]);
-  ws['!cols']=[{wch:14},{wch:24},{wch:22},{wch:8},{wch:8},{wch:8},{wch:14},{wch:16}];
-  XLSX.utils.book_append_sheet(wb, ws, 'الحيازات');
-  XLSX.writeFile(wb, `الحيازات_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
-  toast(`✓ تم تصدير ${db.length} حيازة`);
+  if(!db.length){ toast('⚠️ لا توجد بيانات للتصدير'); return; }
+  const wb = XLSX.utils.book_new();
+  const headerRow = ['رقم الحيازة','اسم الحائز','اسم الحوض','فدان','قيراط','سهم','الإجمالي (فدان)','تاريخ الإضافة'];
+  const rows = db.map(r=>[
+    r.id, r.name, r.basin||'',
+    parseFloat(r.feddan)||0, parseFloat(r.qirat)||0, parseFloat(r.sahm)||0,
+    parseFloat(fmtTotal(r.feddan,r.qirat,r.sahm)),
+    r.created?new Date(r.created).toLocaleDateString('ar-EG'):''
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([headerRow,...rows]);
+  ws['!cols']=[{wch:14},{wch:24},{wch:22},{wch:8},{wch:8},{wch:8},{wch:14},{wch:16}];
+  XLSX.utils.book_append_sheet(wb, ws, 'الحيازات');
+  XLSX.writeFile(wb, `الحيازات_${new Date().toLocaleDateString('ar-EG').replace(/\//g,'-')}.xlsx`);
+  toast(`✓ تم تصدير ${db.length} حيازة`);
 }
 
 // Column name mappings (Arabic & English)
 const COL_MAP = {
-  id:     ['رقم الحيازة','رقم','id','رقم_الحيازة','رقم حيازه'],
-  name:   ['اسم الحائز','اسم','name','الاسم','اسم_الحائز','اسم حائز'],
-  basin:  ['اسم الحوض','حوض','basin','الحوض','اسم_الحوض','اسم حوض'],
-  feddan: ['فدان','feddan','فدانات'],
-  qirat:  ['قيراط','قراريط','qirat','qiraat'],
-  sahm:   ['سهم','اسهم','sahm','سهام'],
+  id:     ['رقم الحيازة','رقم','id','رقم_الحيازة','رقم حيازه'],
+  name:   ['اسم الحائز','اسم','name','الاسم','اسم_الحائز','اسم حائز'],
+  basin:  ['اسم الحوض','حوض','basin','الحوض','اسم_الحوض','اسم حوض'],
+  feddan: ['فدان','feddan','فدانات'],
+  qirat:  ['قيراط','قراريط','qirat','qiraat'],
+  sahm:   ['سهم','اسهم','sahm','سهام'],
 };
 
 function detectColumn(headers, key){
-  const aliases = COL_MAP[key].map(a=>a.trim().toLowerCase());
-  for(let i=0;i<headers.length;i++){
-    const h = String(headers[i]||'').trim().toLowerCase();
-    if(aliases.includes(h)) return i;
-  }
-  return -1;
+  const aliases = COL_MAP[key].map(a=>a.trim().toLowerCase());
+  for(let i=0;i<headers.length;i++){
+    const h = String(headers[i]||'').trim().toLowerCase();
+    if(aliases.includes(h)) return i;
+  }
+  return -1;
 }
 
 function parseExcelFile(file){
-  return new Promise((resolve,reject)=>{
-    const reader = new FileReader();
-    reader.onload = e=>{
-      try{
-        const data = new Uint8Array(e.target.result);
-        const wb = XLSX.read(data,{type:'array'});
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-        resolve(rows);
-      } catch(err){ reject(err); }
-    };
-    reader.onerror=()=>reject(new Error('فشل قراءة الملف'));
-    reader.readAsArrayBuffer(file);
-  });
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      try{
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data,{type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        resolve(rows);
+      } catch(err){ reject(err); }
+    };
+    reader.onerror=()=>reject(new Error('فشل قراءة الملف'));
+    reader.readAsArrayBuffer(file);
+  });
 }
 
 function processImportRows(rows){
-  if(!rows||rows.length<2) return {error:'الملف فارغ أو لا يحتوي على بيانات'};
-  const headers = rows[0];
-  const colId    = detectColumn(headers,'id');
-  const colName  = detectColumn(headers,'name');
-  const colBasin = detectColumn(headers,'basin');
-  const colFed   = detectColumn(headers,'feddan');
-  const colQir   = detectColumn(headers,'qirat');
-  const colSahm  = detectColumn(headers,'sahm');
+  if(!rows||rows.length<2) return {error:'الملف فارغ أو لا يحتوي على بيانات'};
+  const headers = rows[0];
+  const colId    = detectColumn(headers,'id');
+  const colName  = detectColumn(headers,'name');
+  const colBasin = detectColumn(headers,'basin');
+  const colFed   = detectColumn(headers,'feddan');
+  const colQir   = detectColumn(headers,'qirat');
+  const colSahm  = detectColumn(headers,'sahm');
 
-  if(colName===-1) return {error:'لم يُعثر على عمود "اسم الحائز".\nتأكد أن الصف الأول يحتوي على أسماء الأعمدة.'};
-  if(colBasin===-1) return {error:'لم يُعثر على عمود "اسم الحوض".\nتأكد أن الصف الأول يحتوي على أسماء الأعمدة.'};
+  if(colName===-1) return {error:'لم يُعثر على عمود "اسم الحائز".\nتأكد أن الصف الأول يحتوي على أسماء الأعمدة.'};
+  if(colBasin===-1) return {error:'لم يُعثر على عمود "اسم الحوض".\nتأكد أن الصف الأول يحتوي على أسماء الأعمدة.'};
 
-  const results=[];
-  let nextId = db.reduce((a,r)=>Math.max(a,parseInt(r.id)||0),0)+1;
+  const results=[];
+  let nextId = db.reduce((a,r)=>Math.max(a,parseInt(r.id)||0),0)+1;
 
-  for(let i=1;i<rows.length;i++){
-    const row=rows[i];
-    if(row.every(c=>String(c).trim()==='')) continue; // skip empty rows
-    const name = String(row[colName]||'').trim();
-    const basin = String(row[colBasin]||'').trim();
-    const feddan = String(row[colFed]>=0?row[colFed]||0:0);
-    const qirat = String(row[colQir]>=0?row[colQir]||0:0);
-    const sahm = String(row[colSahm]>=0?row[colSahm]||0:0);
+  for(let i=1;i<rows.length;i++){
+    const row=rows[i];
+    if(row.every(c=>String(c).trim()==='')) continue; // skip empty rows
+    const name = String(row[colName]||'').trim();
+    const basin = String(row[colBasin]||'').trim();
+    const feddan = String(row[colFed]>=0?row[colFed]||0:0);
+    const qirat = String(row[colQir]>=0?row[colQir]||0:0);
+    const sahm = String(row[colSahm]>=0?row[colSahm]||0:0);
 
-    if(!name){
-      results.push({status:'skip',reason:'اسم فارغ',row:i+1,name:'—',basin,feddan,qirat,sahm,id:''});
-      continue;
-    }
+    if(!name){
+      results.push({status:'skip',reason:'اسم فارغ',row:i+1,name:'—',basin,feddan,qirat,sahm,id:''});
+      continue;
+    }
 
-    let id = colId>=0 ? String(row[colId]||'').trim() : '';
-    if(!id) id = String(nextId++).padStart(4,'0');
-    else id = id.padStart(4,'0');
+    let id = colId>=0 ? String(row[colId]||'').trim() : '';
+    if(!id) id = String(nextId++).padStart(4,'0');
+    else id = id.padStart(4,'0');
 
-    const existing = db.find(r=>r.id===id);
-    if(existing){
-      results.push({status:'update',id,name,basin,feddan,qirat,sahm,row:i+1});
-    } else {
-      results.push({status:'new',id,name,basin,feddan,qirat,sahm,row:i+1});
-    }
-  }
-  return {results};
+    const existing = db.find(r=>r.id===id);
+    if(existing){
+      results.push({status:'update',id,name,basin,feddan,qirat,sahm,row:i+1});
+    } else {
+      results.push({status:'new',id,name,basin,feddan,qirat,sahm,row:i+1});
+    }
+  }
+  return {results};
 }
 
 function handleFileSelect(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  e.target.value='';
-  parseExcelFile(file).then(rows=>{
-    const {error,results} = processImportRows(rows);
-    updateImportPreview(error, results);
-  }).catch(err=>{
-    updateImportPreview('خطأ في قراءة الملف: '+err.message, null);
-  });
+  const file = e.target.files[0];
+  if(!file) return;
+  e.target.value='';
+  parseExcelFile(file).then(rows=>{
+    const {error,results} = processImportRows(rows);
+    updateImportPreview(error, results);
+  }).catch(err=>{
+    updateImportPreview('خطأ في قراءة الملف: '+err.message, null);
+  });
 }
 
 function updateImportPreview(error, results){
-  const previewEl = document.getElementById('import-preview-area');
-  if(!previewEl) return;
+  const previewEl = document.getElementById('import-preview-area');
+  if(!previewEl) return;
 
-  if(error){
-    previewEl.innerHTML=`<div class="import-error">❌ ${error}</div>`;
-    importPreviewData=[];
-    updateImportBtn();
-    return;
-  }
+  if(error){
+    previewEl.innerHTML=`<div class="import-error">❌ ${error}</div>`;
+    importPreviewData=[];
+    updateImportBtn();
+    return;
+  }
 
-  importPreviewData = results;
-  const newCount = results.filter(r=>r.status==='new').length;
-  const updateCount = results.filter(r=>r.status==='update').length;
-  const skipCount = results.filter(r=>r.status==='skip').length;
+  importPreviewData = results;
+  const newCount = results.filter(r=>r.status==='new').length;
+  const updateCount = results.filter(r=>r.status==='update').length;
+  const skipCount = results.filter(r=>r.status==='skip').length;
 
-  const tableRows = results.slice(0,20).map(r=>`
-    <tr class="preview-row-${r.status}">
-      <td>${r.name}</td>
-      <td>${r.basin}</td>
-      <td>${fmtArea(r.feddan,r.qirat,r.sahm)}</td>
-      <td><span class="badge ${r.status==='new'?'badge-new':r.status==='update'?'badge-update':'badge-skip'}">${r.status==='new'?'جديد':r.status==='update'?'تحديث':'تخطي'}</span></td>
-    </tr>`).join('');
+  const tableRows = results.slice(0,20).map(r=>`
+    <tr class="preview-row-${r.status}">
+      <td>${r.name}</td>
+      <td>${r.basin}</td>
+      <td>${fmtArea(r.feddan,r.qirat,r.sahm)}</td>
+      <td><span class="badge ${r.status==='new'?'badge-new':r.status==='update'?'badge-update':'badge-skip'}">${r.status==='new'?'جديد':r.status==='update'?'تحديث':'تخطي'}</span></td>
+    </tr>`).join('');
 
-  previewEl.innerHTML=`
-    <div class="import-counts">
-      <div class="count-card"><div class="count-num" style="color:var(--green)">${newCount}</div><div class="count-lbl">جديد</div></div>
-      <div class="count-card"><div class="count-num" style="color:var(--amber)">${updateCount}</div><div class="count-lbl">تحديث</div></div>
-      <div class="count-card"><div class="count-num" style="color:var(--red)">${skipCount}</div><div class="count-lbl">تخطي</div></div>
-    </div>
-    <div class="import-preview" style="margin-top:12px">
-      <div class="preview-title">${results.length>20?`أول 20 صف من ${results.length}`:results.length+' صف'}</div>
-      <div class="preview-table-wrap">
-        <table class="preview-table">
-          <thead><tr><th>الاسم</th><th>الحوض</th><th>المساحة</th><th>الحالة</th></tr></thead>
-          <tbody>${tableRows}</tbody>
-        </table>
-      </div>
-    </div>`;
-  updateImportBtn();
+  previewEl.innerHTML=`
+    <div class="import-counts">
+      <div class="count-card"><div class="count-num" style="color:var(--green)">${newCount}</div><div class="count-lbl">جديد</div></div>
+      <div class="count-card"><div class="count-num" style="color:var(--amber)">${updateCount}</div><div class="count-lbl">تحديث</div></div>
+      <div class="count-card"><div class="count-num" style="color:var(--red)">${skipCount}</div><div class="count-lbl">تخطي</div></div>
+    </div>
+    <div class="import-preview" style="margin-top:12px">
+      <div class="preview-title">${results.length>20?`أول 20 صف من ${results.length}`:results.length+' صف'}</div>
+      <div class="preview-table-wrap">
+        <table class="preview-table">
+          <thead><tr><th>الاسم</th><th>الحوض</th><th>المساحة</th><th>الحالة</th></tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  updateImportBtn();
 }
 
 function updateImportBtn(){
-  const btn = document.getElementById('btn-import-confirm');
-  if(!btn) return;
-  const valid = importPreviewData.filter(r=>r.status!=='skip').length;
-  btn.disabled = valid===0;
-  btn.textContent = valid>0?`✓ استيراد ${valid} حيازة`:'لا توجد بيانات صالحة';
+  const btn = document.getElementById('btn-import-confirm');
+  if(!btn) return;
+  const valid = importPreviewData.filter(r=>r.status!=='skip').length;
+  btn.disabled = valid===0;
+  btn.textContent = valid>0?`✓ استيراد ${valid} حيازة`:'لا توجد بيانات صالحة';
 }
 
 function confirmImport(){
-  if(!importPreviewData.length) return;
-  let added=0, updated=0;
-  importPreviewData.forEach(r=>{
-    if(r.status==='skip') return;
-    if(r.status==='new'){
-      db.push({id:r.id,name:r.name,basin:r.basin,feddan:r.feddan,qirat:r.qirat,sahm:r.sahm,created:new Date().toISOString()});
-      added++;
-    } else {
-      const idx=db.findIndex(x=>x.id===r.id);
-      if(idx>=0){ db[idx]={...db[idx],name:r.name,basin:r.basin,feddan:r.feddan,qirat:r.qirat,sahm:r.sahm,updated:new Date().toISOString()}; updated++; }
-    }
-  });
-  save(); closeModal(); renderList();
-  toast(`✓ تمت الإضافة: ${added} | التحديث: ${updated}`);
+  if(!importPreviewData.length) return;
+  let added=0, updated=0;
+  importPreviewData.forEach(r=>{
+    if(r.status==='skip') return;
+    if(r.status==='new'){
+      db.push({id:r.id,name:r.name,basin:r.basin,feddan:r.feddan,qirat:r.qirat,sahm:r.sahm,created:new Date().toISOString()});
+      added++;
+    } else {
+      const idx=db.findIndex(x=>x.id===r.id);
+      if(idx>=0){ db[idx]={...db[idx],name:r.name,basin:r.basin,feddan:r.feddan,qirat:r.qirat,sahm:r.sahm,updated:new Date().toISOString()}; updated++; }
+    }
+  });
+  save(); closeModal(); renderList();
+  toast(`✓ تمت الإضافة: ${added} | التحديث: ${updated}`);
 }
 
 function openExcelModal(){
-  document.getElementById('modal-root').innerHTML=`
-    <div class="modal-backdrop" onclick="bgClose(event)">
-      <div class="modal">
-        <div class="modal-handle"></div>
-        <div class="modal-header">
-          <span class="modal-title">📊 استيراد / تصدير إكسيل</span>
-          <button class="modal-close" onclick="closeModal()">✕</button>
-        </div>
-        <div class="modal-body">
+  document.getElementById('modal-root').innerHTML=`
+    <div class="modal-backdrop" onclick="bgClose(event)">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <span class="modal-title">📊 استيراد / تصدير إكسيل</span>
+          <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
 
-          <!-- Import Section -->
-          <div class="excel-section">
-            <div class="excel-section-title">📥 استيراد من إكسيل</div>
-            <div class="excel-section-desc">ارفع ملف Excel يحتوي على بيانات الحيازات.<br>النظام سيتعرف تلقائياً على الأعمدة ويعرض معاينة قبل الاستيراد.</div>
-            <div class="col-map-info">
-              📋 أسماء الأعمدة المقبولة:<br>
-              <strong>رقم الحيازة</strong> · <strong>اسم الحائز</strong> · <strong>اسم الحوض</strong><br>
-              <strong>فدان</strong> · <strong>قيراط</strong> · <strong>سهم</strong>
-            </div>
-            <div class="drop-zone" id="drop-zone" style="margin-top:12px"
-              onclick="document.getElementById('file-input').click()"
-              ondragover="event.preventDefault();this.classList.add('drag-over')"
-              ondragleave="this.classList.remove('drag-over')"
-              ondrop="this.classList.remove('drag-over');handleDrop(event)">
-              <div class="drop-zone-icon">📂</div>
-              <div class="drop-zone-text">اضغط لاختيار ملف أو اسحب هنا</div>
-              <div class="drop-zone-hint">.xlsx أو .xls</div>
-            </div>
-            <div id="import-preview-area"></div>
-            <button class="btn-import-confirm" id="btn-import-confirm" disabled onclick="confirmImport()">استيراد</button>
-          </div>
+          <!-- Import Section -->
+          <div class="excel-section">
+            <div class="excel-section-title">📥 استيراد من إكسيل</div>
+            <div class="excel-section-desc">ارفع ملف Excel يحتوي على بيانات الحيازات.<br>النظام سيتعرف تلقائياً على الأعمدة ويعرض معاينة قبل الاستيراد.</div>
+            <div class="col-map-info">
+              📋 أسماء الأعمدة المقبولة:<br>
+              <strong>رقم الحيازة</strong> · <strong>اسم الحائز</strong> · <strong>اسم الحوض</strong><br>
+              <strong>فدان</strong> · <strong>قيراط</strong> · <strong>سهم</strong>
+            </div>
+            <div class="drop-zone" id="drop-zone" style="margin-top:12px"
+              onclick="document.getElementById('file-input').click()"
+              ondragover="event.preventDefault();this.classList.add('drag-over')"
+              ondragleave="this.classList.remove('drag-over')"
+              ondrop="this.classList.remove('drag-over');handleDrop(event)">
+              <div class="drop-zone-icon">📂</div>
+              <div class="drop-zone-text">اضغط لاختيار ملف أو اسحب هنا</div>
+              <div class="drop-zone-hint">.xlsx أو .xls</div>
+            </div>
+            <div id="import-preview-area"></div>
+            <button class="btn-import-confirm" id="btn-import-confirm" disabled onclick="confirmImport()">استيراد</button>
+          </div>
 
-          <!-- Template Download -->
-          <div class="excel-section">
-            <div class="excel-section-title">📄 تنزيل النموذج</div>
-            <div class="excel-section-desc">تنزيل ملف Excel فارغ بالتنسيق الصحيح لملء البيانات.</div>
-            <button class="btn-download-template" onclick="downloadTemplate()">⬇️ تنزيل نموذج Excel</button>
-          </div>
+          <!-- Template Download -->
+          <div class="excel-section">
+            <div class="excel-section-title">📄 تنزيل النموذج</div>
+            <div class="excel-section-desc">تنزيل ملف Excel فارغ بالتنسيق الصحيح لملء البيانات.</div>
+            <button class="btn-download-template" onclick="downloadTemplate()">⬇️ تنزيل نموذج Excel</button>
+          </div>
 
-          <!-- Export Section -->
-          <div class="excel-section">
-            <div class="excel-section-title">📤 تصدير البيانات</div>
-            <div class="excel-section-desc">تصدير جميع الحيازات المسجلة (${db.length} حيازة) إلى ملف Excel.</div>
-            <button class="btn-download-template" onclick="exportAll()" style="background:var(--blue-light);color:var(--blue);border-color:var(--blue)">⬆️ تصدير كل الحيازات</button>
-          </div>
+          <!-- Export Section -->
+          <div class="excel-section">
+            <div class="excel-section-title">📤 تصدير البيانات</div>
+            <div class="excel-section-desc">تصدير جميع الحيازات المسجلة (${db.length} حيازة) إلى ملف Excel.</div>
+            <button class="btn-download-template" onclick="exportAll()" style="background:var(--blue-light);color:var(--blue);border-color:var(--blue)">⬆️ تصدير كل الحيازات</button>
+          </div>
 
-        </div>
-      </div>
-    </div>`;
+        </div>
+      </div>
+    </div>`;
 }
 
 function handleDrop(e){
-  e.preventDefault();
-  const file = e.dataTransfer.files[0];
-  if(!file) return;
-  if(!file.name.match(/\.xlsx?$/i)){ toast('⚠️ يرجى رفع ملف Excel (.xlsx أو .xls)'); return; }
-  parseExcelFile(file).then(rows=>{
-    const {error,results}=processImportRows(rows);
-    updateImportPreview(error,results);
-  }).catch(err=>updateImportPreview('خطأ: '+err.message,null));
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if(!file) return;
+  if(!file.name.match(/\.xlsx?$/i)){ toast('⚠️ يرجى رفع ملف Excel (.xlsx أو .xls)'); return; }
+  parseExcelFile(file).then(rows=>{
+    const {error,results}=processImportRows(rows);
+    updateImportPreview(error,results);
+  }).catch(err=>updateImportPreview('خطأ: '+err.message,null));
 }
 
 // Sample data
 if(!db.length){
-  db=[
-    {id:'0001',name:'أحمد محمد علي',basin:'حوض النيل الغربي',feddan:'3',qirat:'12',sahm:'0',created:'2024-01-15T10:00:00Z'},
-    {id:'0002',name:'فاطمة حسن إبراهيم',basin:'حوض الشرقية',feddan:'1',qirat:'18',sahm:'6',created:'2024-02-10T10:00:00Z'},
-    {id:'0003',name:'محمود عبد الرحمن',basin:'حوض النيل الغربي',feddan:'5',qirat:'0',sahm:'12',created:'2024-03-05T10:00:00Z'},
-    {id:'0004',name:'سمية خالد مصطفى',basin:'حوض القناة',feddan:'2',qirat:'6',sahm:'0',created:'2024-04-01T10:00:00Z'},
-  ];
-  save();
+  db=[
+    {id:'0001',name:'أحمد محمد علي',basin:'حوض النيل الغربي',feddan:'3',qirat:'12',sahm:'0',created:'2024-01-15T10:00:00Z'},
+    {id:'0002',name:'فاطمة حسن إبراهيم',basin:'حوض الشرقية',feddan:'1',qirat:'18',sahm:'6',created:'2024-02-10T10:00:00Z'},
+    {id:'0003',name:'محمود عبد الرحمن',basin:'حوض النيل الغربي',feddan:'5',qirat:'0',sahm:'12',created:'2024-03-05T10:00:00Z'},
+    {id:'0004',name:'سمية خالد مصطفى',basin:'حوض القناة',feddan:'2',qirat:'6',sahm:'0',created:'2024-04-01T10:00:00Z'},
+  ];
+  save();
 }
 renderList();
 </script>

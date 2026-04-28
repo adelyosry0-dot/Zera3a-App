@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="الحيازات">
-<title>سجل الحيازات الزراعية</title>
+<title>سجل حيازات 2 خدمات زراعه</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -79,7 +79,7 @@ html, body { height: 100%; background: var(--surface2); font-family: -apple-syst
 .modal-close { background: var(--surface2); border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 18px; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .modal-body { padding: 18px; }
 .field-group { margin-bottom: 16px; }
-.field-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+.field-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 500; display: block; }
 .field-input { width: 100%; border: 1px solid var(--border); border-radius: var(--radius); padding: 11px 14px; font-size: 16px; background: var(--surface2); color: var(--text); font-family: inherit; direction: rtl; -webkit-appearance: none; }
 .field-input:focus { outline: none; border-color: var(--green-mid); background: var(--surface); box-shadow: 0 0 0 3px rgba(99,153,34,0.15); }
 .field-input[readonly] { opacity: 0.6; }
@@ -90,6 +90,22 @@ html, body { height: 100%; background: var(--surface2); font-family: -apple-syst
 .btn-primary:active { background: var(--green-mid); }
 .btn-danger-outline { background: var(--red-light); color: var(--red); border: 1px solid var(--red); border-radius: var(--radius); padding: 13px 16px; font-size: 15px; cursor: pointer; font-family: inherit; }
 .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 16px; font-size: 15px; cursor: pointer; font-family: inherit; }
+
+/* Breakdown Section Styles */
+.breakdown-section { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
+.breakdown-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.btn-add-sm { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue); border-radius: 6px; padding: 6px 10px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.breakdown-item { display: flex; flex-wrap: wrap; gap: 8px; background: var(--surface2); padding: 10px; border-radius: var(--radius); margin-bottom: 8px; border: 0.5px solid var(--border); position: relative; }
+.bd-col { flex: 1; min-width: 100px; }
+.bd-col select, .bd-col input { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font-size: 14px; background: var(--surface); color: var(--text); font-family: inherit; }
+.bd-area-row { display: flex; gap: 6px; width: 100%; margin-top: 4px; }
+.bd-area-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.bd-area-col span { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.bd-area-col input { width: 100%; text-align: center; border: 1px solid var(--border); border-radius: 6px; padding: 6px; background: var(--surface); color: var(--text); }
+.btn-del-sm { position: absolute; top: -8px; left: -8px; background: var(--red); color: white; border: none; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.area-warning { font-size: 13px; font-weight: 600; margin-top: 12px; text-align: center; padding: 10px; border-radius: var(--radius); }
+.warn-red { background: var(--red-light); color: var(--red); border: 1px solid var(--red); }
+.warn-green { background: var(--green-light); color: var(--green); border: 1px solid var(--green); }
 
 /* Detail */
 .detail-hero { background: var(--green-light); border-radius: var(--radius-lg); margin-bottom: 16px; padding: 20px; text-align: center; }
@@ -158,7 +174,7 @@ html, body { height: 100%; background: var(--surface2); font-family: -apple-syst
   <div class="header">
     <div class="header-top">
       <div>
-        <h1>سجل الحيازات الزراعية</h1>
+        <h1>سجل حيازات 2 خدمات زراعه</h1>
         <div class="header-sub" id="header-sub">جاري التحميل من جوجل...</div>
       </div>
       <div class="header-btns">
@@ -196,6 +212,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4H9xj3Ck71vcuGW9g7
 let db = [];
 let sortBy = null, sortDir = 1, editId = null;
 let importPreviewData = [];
+let currentBreakdowns = [];
 
 // تحميل البيانات من جوجل شيت عند فتح البرنامج
 async function loadData() {
@@ -255,6 +272,15 @@ function renderList(){
 
 function showFormModal(rec){
   const isEdit=!!rec;
+  
+  // تهيئة قائمة التقسيم
+  currentBreakdowns = [];
+  if(isEdit && rec.breakdowns) {
+    try {
+      currentBreakdowns = typeof rec.breakdowns === 'string' ? JSON.parse(rec.breakdowns) : rec.breakdowns;
+    } catch(e) {}
+  }
+
   document.getElementById('modal-root').innerHTML=`
     <div class="modal-backdrop" onclick="bgClose(event)">
       <div class="modal">
@@ -279,11 +305,21 @@ function showFormModal(rec){
           <div class="field-group">
             <div class="field-label">المساحة</div>
             <div class="area-row">
-              <div><div class="area-unit">فدان</div><input class="field-input" id="f-fed" type="number" min="0" value="${isEdit?rec.feddan:0}" /></div>
-              <div><div class="area-unit">قيراط</div><input class="field-input" id="f-qir" type="number" min="0" max="23" value="${isEdit?rec.qirat:0}" /></div>
-              <div><div class="area-unit">سهم</div><input class="field-input" id="f-sahm" type="number" min="0" max="23" value="${isEdit?rec.sahm:0}" /></div>
+              <div><div class="area-unit">فدان</div><input class="field-input" id="f-fed" type="number" min="0" value="${isEdit?rec.feddan:0}" oninput="checkAreaBalance()" /></div>
+              <div><div class="area-unit">قيراط</div><input class="field-input" id="f-qir" type="number" min="0" max="23" value="${isEdit?rec.qirat:0}" oninput="checkAreaBalance()" /></div>
+              <div><div class="area-unit">سهم</div><input class="field-input" id="f-sahm" type="number" min="0" max="23" value="${isEdit?rec.sahm:0}" oninput="checkAreaBalance()" /></div>
             </div>
           </div>
+          
+          <div class="field-group breakdown-section">
+            <div class="breakdown-header">
+              <span class="field-label" style="margin-bottom:0">تفاصيل استغلال المساحة</span>
+              <button class="btn-add-sm" onclick="addBd()">+ إضافة تفاصيل</button>
+            </div>
+            <div id="breakdown-list"></div>
+            <div id="area-warning" class="area-warning" style="display:none"></div>
+          </div>
+
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" onclick="closeModal()">إلغاء</button>
@@ -291,7 +327,104 @@ function showFormModal(rec){
         </div>
       </div>
     </div>`;
-  setTimeout(()=>{ const n=document.getElementById('f-name'); if(n&&!isEdit)n.focus(); },300);
+  
+  setTimeout(()=>{ 
+    renderBreakdowns();
+    const n=document.getElementById('f-name'); 
+    if(n&&!isEdit)n.focus(); 
+  },100);
+}
+
+// ==== دوال التقسيم الداخلي ====
+function renderBreakdowns() {
+  const container = document.getElementById('breakdown-list');
+  if(!container) return;
+  container.innerHTML = currentBreakdowns.map((b, i) => `
+    <div class="breakdown-item">
+      <div class="bd-col">
+        <select onchange="updateBd(${i}, 'type', this.value)">
+          <option value="محصول" ${b.type==='محصول'?'selected':''}>محصول منزرع</option>
+          <option value="تعدي" ${b.type==='تعدي'?'selected':''}>تعدي</option>
+          <option value="تبوير" ${b.type==='تبوير'?'selected':''}>تبوير</option>
+          <option value="منافع" ${b.type==='منافع'?'selected':''}>منافع</option>
+        </select>
+      </div>
+      ${b.type === 'محصول' ? `
+      <div class="bd-col">
+        <select onchange="updateBd(${i}, 'name', this.value)">
+          <option value="" disabled ${!b.name?'selected':''}>اختر المحصول</option>
+          <option value="جوافة" ${b.name==='جوافة'?'selected':''}>جوافة</option>
+          <option value="برتقال" ${b.name==='برتقال'?'selected':''}>برتقال</option>
+          <option value="مانجو" ${b.name==='مانجو'?'selected':''}>مانجو</option>
+          <option value="كوسة" ${b.name==='كوسة'?'selected':''}>كوسة</option>
+          <option value="ذرة" ${b.name==='ذرة'?'selected':''}>ذرة</option>
+          <option value="شعير" ${b.name==='شعير'?'selected':''}>شعير</option>
+          <option value="أخرى" ${b.name==='أخرى'?'selected':''}>أخرى...</option>
+        </select>
+      </div>` : ''}
+      <div class="bd-area-row">
+        <div class="bd-area-col"><span>فدان</span><input type="number" min="0" value="${b.fed}" oninput="updateBd(${i}, 'fed', this.value)"></div>
+        <div class="bd-area-col"><span>قيراط</span><input type="number" min="0" max="23" value="${b.qir}" oninput="updateBd(${i}, 'qir', this.value)"></div>
+        <div class="bd-area-col"><span>سهم</span><input type="number" min="0" max="23" value="${b.sahm}" oninput="updateBd(${i}, 'sahm', this.value)"></div>
+      </div>
+      <button class="btn-del-sm" onclick="removeBd(${i})">✕</button>
+    </div>
+  `).join('');
+  checkAreaBalance();
+}
+
+function addBd() {
+  currentBreakdowns.push({ type: 'محصول', name: '', fed: 0, qir: 0, sahm: 0 });
+  renderBreakdowns();
+}
+
+function updateBd(index, field, value) {
+  currentBreakdowns[index][field] = field === 'type' || field === 'name' ? value : parseFloat(value) || 0;
+  if(field === 'type' && value !== 'محصول') currentBreakdowns[index].name = value; 
+  if(field === 'type') renderBreakdowns(); 
+  else checkAreaBalance();
+}
+
+function removeBd(index) {
+  currentBreakdowns.splice(index, 1);
+  renderBreakdowns();
+}
+
+function checkAreaBalance() {
+  const totFed = parseFloat(document.getElementById('f-fed').value) || 0;
+  const totQir = parseFloat(document.getElementById('f-qir').value) || 0;
+  const totSahm = parseFloat(document.getElementById('f-sahm').value) || 0;
+
+  const totalInSahms = (totFed * 24 * 24) + (totQir * 24) + totSahm;
+  
+  let bdInSahms = 0;
+  currentBreakdowns.forEach(b => {
+    bdInSahms += ((parseFloat(b.fed)||0) * 24 * 24) + ((parseFloat(b.qir)||0) * 24) + (parseFloat(b.sahm)||0);
+  });
+
+  const warnEl = document.getElementById('area-warning');
+  if(currentBreakdowns.length === 0) {
+    warnEl.style.display = 'none';
+    return;
+  }
+  
+  warnEl.style.display = 'block';
+  const diff = totalInSahms - bdInSahms;
+  
+  if (Math.abs(diff) < 0.01) {
+    warnEl.className = 'area-warning warn-green';
+    warnEl.textContent = '✓ المساحة مقسمة بالكامل بشكل صحيح';
+  } else if (diff > 0) {
+    let dFed = Math.floor(diff / (24 * 24));
+    let rem = diff % (24 * 24);
+    let dQir = Math.floor(rem / 24);
+    let dSahm = Math.round(rem % 24);
+    warnEl.className = 'area-warning warn-red';
+    warnEl.textContent = `⚠️ متبقي مساحة غير مقسمة: ${fmtArea(dFed, dQir, dSahm)}`;
+  } else {
+    warnEl.className = 'area-warning warn-red';
+    warnEl.textContent = '❌ مجموع التقسيم أكبر من المساحة الكلية للحيازة!';
+  }
 }
 
 // حفظ البيانات في جوجل شيت
@@ -305,7 +438,11 @@ async function saveRecord(){
   
   if(!name||!basin){ toast('⚠️ يرجى تعبئة الاسم والحوض'); return; }
   
-  const record = {id, name, basin, feddan, qirat, sahm, created: new Date().toISOString()};
+  const record = {
+    id, name, basin, feddan, qirat, sahm, 
+    breakdowns: JSON.stringify(currentBreakdowns), // تحويل التقسيم لنص لحفظه في شيت جوجل
+    created: new Date().toISOString()
+  };
 
   if(!editId){
     if(db.find(r=>r.id===id)){ toast('⚠️ رقم الحيازة موجود مسبقاً'); return; }
@@ -332,11 +469,38 @@ async function saveRecord(){
 }
 
 function openAdd(){ editId=null; showFormModal(null); }
-function openEdit(id){ editId=id; showFormModal(db.find(r=>r.id===id)); closeModal(); }
+
+function openEdit(id){ 
+  editId=id; 
+  const rec = db.find(r=>r.id===id);
+  closeModal(); // نقوم بإغلاق نافذة التفاصيل أولاً
+  showFormModal(rec); // ثم نفتح نافذة التعديل
+}
 
 function openDetail(id){
   const rec=db.find(r=>r.id===id); if(!rec)return;
   const created=rec.created?new Date(rec.created).toLocaleDateString('ar-EG'):'—';
+  
+  let bdArray = [];
+  if(rec.breakdowns) {
+    try { bdArray = typeof rec.breakdowns === 'string' ? JSON.parse(rec.breakdowns) : rec.breakdowns; } catch(e) {}
+  }
+
+  let bdHtml = '';
+  if(bdArray && bdArray.length > 0) {
+    bdHtml = `<div class="breakdown-section" style="margin-top:10px; padding-top:10px;">
+      <div class="field-label" style="margin-bottom:8px">تفاصيل استغلال المساحة:</div>
+      <table class="detail-table" style="font-size:14px">
+        ${bdArray.map(b => `
+          <tr>
+            <td style="color:var(--text)">${b.type === 'محصول' ? '🌾 محصول ' + (b.name||'') : '🛑 ' + b.type}</td>
+            <td style="text-align:left; font-weight:normal">${fmtArea(b.fed, b.qir, b.sahm)}</td>
+          </tr>
+        `).join('')}
+      </table>
+    </div>`;
+  }
+
   document.getElementById('modal-root').innerHTML=`
     <div class="modal-backdrop" onclick="bgClose(event)">
       <div class="modal">
@@ -358,6 +522,7 @@ function openDetail(id){
             <tr><td>الإجمالي (فدان)</td><td>${fmtTotal(rec.feddan,rec.qirat,rec.sahm)}</td></tr>
             <tr><td>تاريخ الإضافة</td><td>${created}</td></tr>
           </table>
+          ${bdHtml}
           <div class="detail-actions">
             <button class="btn-copy" onclick="copyRecord('${rec.id}')">📋 نسخ</button>
             <button class="btn-edit" onclick="openEdit('${rec.id}')">✏️ تعديل</button>
@@ -414,7 +579,7 @@ async function deleteRecord(id){
   }
 }
 
-function closeModal(){ document.getElementById('modal-root').innerHTML=''; importPreviewData=[]; }
+function closeModal(){ document.getElementById('modal-root').innerHTML=''; importPreviewData=[]; currentBreakdowns=[]; }
 function bgClose(e){ if(e.target.classList.contains('modal-backdrop')) closeModal(); }
 
 // ========== EXCEL FUNCTIONS ==========
@@ -691,6 +856,7 @@ function handleDrop(e){
     updateImportPreview(error,results);
   }).catch(err=>updateImportPreview('خطأ: '+err.message,null));
 }
+
 // ========== PRINT FUNCTIONS ==========
 
 function printAllRecords(){
@@ -724,9 +890,10 @@ function printAllRecords(){
   let pageNum = 1;
   
   html += `<h2>سجل الحيازات الزراعية - الصفحة ${pageNum}</h2>`;
+  // تم ترتيب الأعمدة بحيث الفدان على أقصى يسار مجموعة المساحة
   html += `<table><thead><tr>
-    <th>رقم</th><th>رقم الحيازة</th><th>اسم الحائز</th><th>اسم الحوض</th>
-    <th>فدان</th><th>قيراط</th><th>سهم</th><th>الإجمالي</th>
+    <th>مسلسل</th><th>رقم الحيازة</th><th>اسم الحائز</th><th>اسم الحوض</th>
+    <th>سهم</th><th>قيراط</th><th>فدان</th>
   </tr></thead><tbody>`;
   
   list.forEach((rec, idx) => {
@@ -737,8 +904,8 @@ function printAllRecords(){
         <div class="page-break"></div>
         <h2>سجل الحيازات الزراعية - الصفحة ${pageNum}</h2>
         <table><thead><tr>
-          <th>رقم</th><th>رقم الحيازة</th><th>اسم الحائز</th><th>اسم الحوض</th>
-          <th>فدان</th><th>قيراط</th><th>سهم</th><th>الإجمالي</th>
+          <th>مسلسل</th><th>رقم الحيازة</th><th>اسم الحائز</th><th>اسم الحوض</th>
+          <th>سهم</th><th>قيراط</th><th>فدان</th>
         </tr></thead><tbody>`;
     }
     html += `<tr>
@@ -746,10 +913,9 @@ function printAllRecords(){
       <td>${rec.id}</td>
       <td>${rec.name}</td>
       <td>${rec.basin}</td>
-      <td>${rec.feddan || 0}</td>
-      <td>${rec.qirat || 0}</td>
       <td>${rec.sahm || 0}</td>
-      <td>${fmtTotal(rec.feddan, rec.qirat, rec.sahm)}</td>
+      <td>${rec.qirat || 0}</td>
+      <td>${rec.feddan || 0}</td>
     </tr>`;
     
     rowCount++;

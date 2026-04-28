@@ -18,9 +18,21 @@
 }
 html, body { height: 100%; background: var(--bg-page); color: var(--text-main); overflow-x: hidden; }
 
+/* ================= LOADING SCREEN ================= */
+#loading-view {
+  position: fixed; inset: 0; background: var(--primary); z-index: 10000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;
+}
+.spinner {
+  width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-top-color: white; 
+  border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
+
 /* ================= LOGIN SCREEN ================= */
 #login-view { 
-  display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; 
+  display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; 
   background: linear-gradient(rgba(20, 70, 30, 0.8), rgba(46, 125, 50, 0.8)), url('https://images.unsplash.com/photo-1590682680695-43b964a3ae17?q=80&w=1080&auto=format&fit=crop') center/cover no-repeat;
   padding: 20px; z-index: 9999; position: fixed; inset: 0; 
 }
@@ -96,6 +108,11 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 </style>
 </head>
 <body>
+
+<div id="loading-view">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-msg">جاري تحميل البيانات من جوجل...</div>
+</div>
 
 <div id="login-view">
   
@@ -211,17 +228,67 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyChwqdSqgWMKWh4eZiX
 let dbHoldings = [];
 let dbInventory = [];
 let dbHr = [];
-// تحميل المستخدمين من الذاكرة المحلية كطبقة حماية لضمان عدم الطرد أثناء تأخر السحابة
-let dbUsers = JSON.parse(localStorage.getItem('app_users')) || [];
+let dbUsers = [];
 
 let currentUser = null;
 let currentInvCategory = '';
 let currentHrTab = 'employee';
 let editId = null;
 
+// ================= BOOTSTRAP APP & LOADING =================
+// هذه الدالة هي أول شيء يعمل عند فتح البرنامج لحل مشكلة التداخل والتأخير
+async function bootApp() {
+    try {
+        const res = await fetch(SCRIPT_URL);
+        const data = await res.json();
+        
+        dbHoldings = data.holdings || [];
+        dbInventory = data.inventory || [];
+        dbHr = data.hr || [];
+        
+        if (data.users && data.users.length > 0) {
+            dbUsers = data.users;
+            localStorage.setItem('app_users', JSON.stringify(dbUsers));
+        } else {
+            // إذا كانت السحابة فارغة (أول مرة)، نضع حساب المدير الافتراضي
+            dbUsers = JSON.parse(localStorage.getItem('app_users')) || [];
+            if (dbUsers.length === 0) {
+                 dbUsers = [{ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }];
+            }
+        }
+    } catch (err) {
+        console.error(err);
+        document.getElementById('loading-msg').textContent = "يعمل بدون اتصال بالإنترنت...";
+        dbUsers = JSON.parse(localStorage.getItem('app_users')) || [{ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }];
+    }
+
+    // إخفاء شاشة التحميل وفحص الدخول
+    setTimeout(() => {
+        document.getElementById('loading-view').style.display = 'none';
+        verifySessionAndStart();
+    }, 500);
+}
+
+function verifySessionAndStart() {
+    const userStr = localStorage.getItem('session_user');
+    if(userStr) {
+        const savedUser = JSON.parse(userStr);
+        const stillExists = dbUsers.find(x => String(x.user) === String(savedUser.user));
+        if (stillExists) {
+            currentUser = stillExists;
+            localStorage.setItem('session_user', JSON.stringify(currentUser));
+            initApp();
+            return;
+        } else {
+            localStorage.removeItem('session_user');
+        }
+    }
+    // إظهار شاشة الدخول فقط إذا لم يكن هناك جلسة مسجلة
+    document.getElementById('login-view').style.display = 'flex';
+}
+
 // ================= AUTH & SESSION =================
 
-// التبديل في شاشة الدخول بين تسجيل الدخول وتغيير كلمة السر
 function showChangePassLogin() {
     document.getElementById('login-card-main').style.display = 'none';
     document.getElementById('login-card-change').style.display = 'block';
@@ -246,12 +313,11 @@ async function doChangePassLogin() {
     }
 
     dbUsers[idx].pass = pNew;
-    localStorage.setItem('app_users', JSON.stringify(dbUsers)); // حفظ محلياً فوراً
+    localStorage.setItem('app_users', JSON.stringify(dbUsers));
     
-    alert('تم تغيير كلمة المرور بنجاح، سيتم حفظها في السحابة وتوجيهك للدخول.');
+    alert('تم تغيير كلمة المرور بنجاح، سيتم تحديثها بالسحابة.');
     hideChangePassLogin();
     
-    // وضع الباسورد الجديد لتسهيل الدخول
     document.getElementById('login-user').value = u;
     document.getElementById('login-pass').value = pNew;
 
@@ -270,51 +336,6 @@ function attemptLogin() {
   } else {
     document.getElementById('login-err').style.display = 'block';
   }
-}
-
-// الدخول الفوري وتحديث السحابة في الخلفية
-function checkSession() {
-  const userStr = localStorage.getItem('session_user');
-  if(userStr) {
-    currentUser = JSON.parse(userStr);
-    initApp(); 
-  }
-
-  fetch(SCRIPT_URL)
-    .then(res => res.json())
-    .then(data => {
-      dbHoldings = data.holdings || [];
-      dbInventory = data.inventory || [];
-      dbHr = data.hr || [];
-      
-      if (data.users && data.users.length > 0) {
-        dbUsers = data.users;
-        localStorage.setItem('app_users', JSON.stringify(dbUsers)); // مزامنة الذاكرة المحلية
-      } else if (!dbUsers.length) {
-        dbUsers = [{ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }];
-        localStorage.setItem('app_users', JSON.stringify(dbUsers));
-      }
-
-      if (currentUser) {
-        const userInCloud = dbUsers.find(x => String(x.id) === String(currentUser.id));
-        if (!userInCloud) {
-          logout(); // طرد المستخدم إذا تم حذفه
-        } else {
-          // تحديث الصلاحية والاسم إذا تغيروا
-          currentUser.role = userInCloud.role;
-          currentUser.name = userInCloud.name;
-          localStorage.setItem('session_user', JSON.stringify(currentUser));
-          updateAdminVisibility();
-          reRenderCurrentView();
-        }
-      }
-    })
-    .catch(err => {
-      if(!dbUsers.length) {
-        dbUsers = [{ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }];
-        localStorage.setItem('app_users', JSON.stringify(dbUsers));
-      }
-    });
 }
 
 function logout() {
@@ -484,7 +505,7 @@ function openHoldingModal(id = null) {
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-green" onclick="saveHolding()">حفظ البيانات السحابية</button>
+          <button class="btn btn-green" onclick="saveHolding()">حفظ البيانات</button>
         </div>
       </div>
     </div>`;
@@ -646,7 +667,7 @@ async function saveInventory() {
   if(editId) { const idx = dbInventory.findIndex(x => String(x.id) === String(editId)); dbInventory[idx] = rec; }
   else { dbInventory.push(rec); }
   
-  closeModal(); renderInventory(); toast('جاري الحفظ بالسحابة...');
+  closeModal(); renderInventory(); toast('جاري الحفظ...');
   try { 
     await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المخازن', record: rec }) }); 
     toast('✓ تم الحفظ'); 
@@ -818,7 +839,6 @@ async function saveUser() {
     const idx = dbUsers.findIndex(x => String(x.id) === String(editId));
     if(idx > -1) dbUsers[idx] = rec; else dbUsers.push(rec);
 
-    // إذا كان المدير يعدل حسابه الخاص (باسورد أو اسم)، يجب تحديث الجلسة فوراً لكي لا يطرد نفسه
     if(currentUser && String(currentUser.id) === String(editId)) {
         currentUser = rec;
         localStorage.setItem('session_user', JSON.stringify(currentUser));
@@ -826,7 +846,6 @@ async function saveUser() {
     }
   }
   
-  // حفظ محلي لضمان الاستقرار ثم الرفع للسحابة
   localStorage.setItem('app_users', JSON.stringify(dbUsers));
   
   closeModal(); renderUsers(); toast('جاري الحفظ...');
@@ -844,8 +863,9 @@ async function delUser(id) {
   try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'المستخدمين', id: String(id) }) }); } catch(e){}
 }
 
-// BOOTSTRAP APP
-checkSession();
+// ================= BOOTSTRAP TRIGGER =================
+// بدء تشغيل التطبيق وعرض شاشة التحميل فوراً
+bootApp();
 </script>
 </body>
 </html>

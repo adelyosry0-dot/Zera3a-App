@@ -291,7 +291,7 @@ function checkSession() {
         dbUsers = data.users;
         localStorage.setItem('app_users', JSON.stringify(dbUsers)); // مزامنة الذاكرة المحلية
       } else if (!dbUsers.length) {
-        dbUsers = [{ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }];
+        dbUsers = [{ id: 1, user: 'ahmed', pass: 'ahmed2026', role: 'admin', name: 'المدير العام' }];
         localStorage.setItem('app_users', JSON.stringify(dbUsers));
       }
 

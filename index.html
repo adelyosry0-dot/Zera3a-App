@@ -4,168 +4,177 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#2E7D32">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="حيازات برو">
-<title>سجل حيازات 2 خدمات زراعه</title>
+<title>جمعية الناصريه الزراعيه</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* ================= CSS RESET & VARIABLES ================= */
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
 :root {
-  --primary: #2E7D32;         /* Dark Green */
-  --primary-light: #E8F5E9;   
-  --secondary: #4CAF50;       /* Medium Green */
-  --accent: #FFC107;          /* Amber */
-  --bg-page: #F4F7F6;         /* Light Grey-Green */
-  --surface: #FFFFFF;
-  --text-main: #2C3E50;       /* Dark Slate */
-  --text-muted: #7F8C8D;
-  --border-color: #E0E6ED;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --shadow-card: 0 4px 15px rgba(0, 0, 0, 0.05);
-  --shadow-header: 0 2px 10px rgba(46, 125, 50, 0.15);
-  
-  /* Action Colors */
-  --color-edit: #1976D2; --bg-edit: #E3F2FD;
-  --color-copy: #607D8B; --bg-copy: #ECEFF1;
-  --color-del: #D32F2F;  --bg-del: #FFEBEE;
+  --primary: #2E7D32; --primary-light: #E8F5E9; --secondary: #4CAF50;
+  --bg-page: #F4F7F6; --surface: #FFFFFF; --text-main: #2C3E50; --text-muted: #7F8C8D; --border-color: #E0E6ED;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 20px;
+  --shadow-card: 0 4px 15px rgba(0,0,0,0.05);
+  --color-edit: #1976D2; --bg-edit: #E3F2FD; --color-copy: #607D8B; --bg-copy: #ECEFF1; --color-del: #D32F2F; --bg-del: #FFEBEE;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-page: #121212; --surface: #1E1E1E; --text-main: #E0E0E0; --text-muted: #A0A0A0; --border-color: #333333;
-    --primary-light: #1B5E20; --bg-edit: #0D47A1; --bg-copy: #37474F; --bg-del: #b71c1c;
-    --color-edit: #90CAF9; --color-copy: #B0BEC5; --color-del: #FFCDD2;
-  }
-}
+html, body { height: 100%; background: var(--bg-page); color: var(--text-main); overflow-x: hidden; }
 
-html, body { height: 100%; background: var(--bg-page); color: var(--text-main); }
-#app { max-width: 500px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; background: var(--bg-page); position: relative; }
+/* ================= LOGIN SCREEN ================= */
+#login-view { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 20px; z-index: 9999; position: relative; }
+.login-card { background: var(--surface); padding: 30px 24px; border-radius: var(--radius-lg); width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; }
+/* ضع رابط الصورة الخاصة بك مكان رابط الصورة الافتراضي في الـ HTML بالأسفل */
+.login-logo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto 16px; border: 3px solid var(--primary-light); background: #f0f0f0; }
+.login-title { font-size: 22px; font-weight: 700; color: var(--primary); margin-bottom: 24px; }
+.login-input { width: 100%; border: 1.5px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px; font-size: 15px; margin-bottom: 16px; background: var(--bg-page); outline: none; }
+.login-input:focus { border-color: var(--primary); }
+.btn-login { width: 100%; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+.btn-login:active { transform: scale(0.98); background: var(--secondary); }
+.login-error { color: var(--color-del); font-size: 13px; margin-top: 10px; display: none; }
+
+/* ================= MAIN APP CONTAINER ================= */
+#app-view { display: none; max-width: 500px; margin: 0 auto; height: 100vh; flex-direction: column; background: var(--bg-page); position: relative; }
+
+/* ================= SIDEBAR ================= */
+.sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; opacity: 0; visibility: hidden; transition: 0.3s; }
+.sidebar-overlay.active { opacity: 1; visibility: visible; }
+.sidebar { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: var(--surface); z-index: 1001; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -5px 0 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+.sidebar.active { right: 0; }
+.sidebar-header { background: var(--primary); color: white; padding: 24px 20px; text-align: center; }
+.sidebar-header h2 { font-size: 18px; margin-bottom: 4px; }
+.sidebar-header p { font-size: 13px; opacity: 0.8; }
+.sidebar-menu { padding: 10px 0; flex: 1; overflow-y: auto; }
+.menu-item { display: flex; align-items: center; padding: 14px 20px; color: var(--text-main); font-size: 15px; font-weight: 600; cursor: pointer; border-bottom: 1px solid var(--bg-page); text-decoration: none; }
+.menu-item:hover, .menu-item:active { background: var(--primary-light); color: var(--primary); }
+.menu-item.admin-only { display: none; } /* يظهر للمدير فقط عبر الجافاسكريبت */
+.menu-icon { margin-left: 12px; font-size: 18px; }
+.btn-logout { margin: 20px; background: var(--bg-del); color: var(--color-del); border: none; padding: 12px; border-radius: var(--radius-sm); font-weight: bold; cursor: pointer; }
 
 /* ================= HEADER ================= */
-.header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; padding: 20px 16px 16px; padding-top: max(20px, env(safe-area-inset-top)); flex-shrink: 0; border-bottom-left-radius: var(--radius-lg); border-bottom-right-radius: var(--radius-lg); box-shadow: var(--shadow-header); z-index: 10; }
-.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.title-area { display: flex; align-items: center; gap: 12px; }
-.app-logo { width: 42px; height: 42px; background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 22px; border: 1px solid rgba(255,255,255,0.3); }
-.header h1 { font-size: 19px; font-weight: 700; letter-spacing: 0.5px; }
-.header-sub { font-size: 13px; opacity: 0.9; margin-top: 2px; }
+.header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); flex-shrink: 0; border-bottom-left-radius: var(--radius-lg); border-bottom-right-radius: var(--radius-lg); z-index: 10; display: flex; justify-content: space-between; align-items: center; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.menu-toggle { background: transparent; border: none; color: white; font-size: 24px; cursor: pointer; }
+.header-titles h1 { font-size: 17px; font-weight: 700; }
+.header-titles p { font-size: 11px; opacity: 0.9; }
 .header-btns { display: flex; gap: 8px; }
-.btn-icon { background: rgba(255,255,255,0.2); border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: all 0.2s; }
-.btn-icon:active { transform: scale(0.9); background: rgba(255,255,255,0.3); }
+.btn-icon { background: rgba(255,255,255,0.2); border: none; color:white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
 
 /* ================= SEARCH & STATS ================= */
 .toolbar-wrap { padding: 16px; flex-shrink: 0; }
-.search-container { display: flex; gap: 8px; background: var(--surface); padding: 6px; border-radius: var(--radius-lg); box-shadow: var(--shadow-card); margin-bottom: 16px; border: 1px solid var(--border-color); }
-.search-filter { border: none; background: var(--bg-page); padding: 8px 12px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; color: var(--text-main); outline: none; cursor: pointer; }
-.search-input-wrap { flex: 1; position: relative; display: flex; align-items: center; }
-.search-input-wrap input { width: 100%; border: none; background: transparent; padding: 8px 10px; font-size: 15px; color: var(--text-main); outline: none; }
-.search-input-wrap input::placeholder { color: var(--text-muted); }
+.search-container { display: flex; gap: 8px; background: var(--surface); padding: 6px; border-radius: var(--radius-md); box-shadow: var(--shadow-card); margin-bottom: 12px; border: 1px solid var(--border-color); }
+.search-filter { border: none; background: var(--bg-page); padding: 8px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; outline: none; }
+.search-input-wrap { flex: 1; display: flex; align-items: center; }
+.search-input-wrap input { width: 100%; border: none; background: transparent; padding: 8px; font-size: 14px; outline: none; }
 
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.stat-card { background: var(--surface); border-radius: var(--radius-md); padding: 14px; box-shadow: var(--shadow-card); border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; }
-.stat-val { font-size: 22px; font-weight: 700; color: var(--primary); }
-.stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat-card { background: var(--surface); border-radius: var(--radius-sm); padding: 12px; text-align: center; border: 1px solid var(--border-color); }
+.stat-val { font-size: 20px; font-weight: 700; color: var(--primary); }
+.stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-/* ================= LIST & CARDS ================= */
-.list-wrap { flex: 1; overflow-y: auto; padding: 0 16px 80px; -webkit-overflow-scrolling: touch; }
-.record-card { background: var(--surface); border-radius: var(--radius-md); margin-bottom: 12px; box-shadow: var(--shadow-card); border: 1px solid var(--border-color); overflow: hidden; transition: transform 0.1s ease; }
-.record-card:active { transform: scale(0.98); }
-.rec-body { padding: 16px; cursor: pointer; }
-.rec-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-.rec-title-wrap { display: flex; flex-direction: column; gap: 4px; }
-.rec-name { font-size: 16px; font-weight: 700; color: var(--text-main); }
-.rec-id { font-size: 12px; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 2px 8px; border-radius: 4px; align-self: flex-start; }
-.rec-badges { display: flex; gap: 8px; flex-wrap: wrap; }
-.badge { font-size: 12px; padding: 5px 10px; border-radius: 6px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
-.badge-area { background: var(--bg-page); color: var(--text-main); border: 1px solid var(--border-color); }
-.badge-basin { background: #FFF8E1; color: #FF8F00; border: 1px solid #FFECB3; }
-@media (prefers-color-scheme: dark) { .badge-basin { background: #3E2723; color: #FFCA28; border-color: #5D4037; } }
+/* ================= LIST ================= */
+.list-wrap { flex: 1; overflow-y: auto; padding: 0 16px 80px; }
+.record-card { background: var(--surface); border-radius: var(--radius-md); margin-bottom: 12px; border: 1px solid var(--border-color); overflow: hidden; }
+.rec-body { padding: 14px; cursor: pointer; }
+.rec-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.rec-name { font-size: 15px; font-weight: 700; }
+.rec-id { font-size: 11px; color: var(--primary); background: var(--primary-light); padding: 2px 6px; border-radius: 4px; }
+.rec-nid { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; display: block; }
+.rec-badges { display: flex; gap: 6px; }
+.badge { font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background: var(--bg-page); border: 1px solid var(--border-color); }
 
-.rec-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 12px; background: var(--bg-page); border-top: 1px solid var(--border-color); }
-.action-btn { padding: 8px; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: opacity 0.2s; }
-.action-btn:active { opacity: 0.7; }
+.rec-actions { display: flex; padding: 8px; background: var(--bg-page); border-top: 1px solid var(--border-color); gap: 6px; }
+.action-btn { flex: 1; padding: 8px; border: none; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
 .action-btn.edit { background: var(--bg-edit); color: var(--color-edit); }
 .action-btn.copy { background: var(--bg-copy); color: var(--color-copy); }
 .action-btn.del { background: var(--bg-del); color: var(--color-del); }
 
-.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.empty-icon { font-size: 48px; opacity: 0.5; }
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
 
-/* ================= FLOATING ADD BUTTON ================= */
-.fab { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; border: none; padding: 14px 28px; border-radius: 30px; font-size: 16px; font-weight: 700; box-shadow: 0 4px 15px rgba(46, 125, 50, 0.4); display: flex; align-items: center; gap: 8px; cursor: pointer; z-index: 100; transition: transform 0.2s; }
-.fab:active { transform: translateX(-50%) scale(0.95); background: var(--secondary); }
+/* ================= FAB ================= */
+.fab { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 30px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 15px rgba(46,125,50,0.4); cursor: pointer; z-index: 100; }
 
 /* ================= MODALS ================= */
-.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); display: flex; align-items: flex-end; justify-content: center; z-index: 200; opacity: 0; animation: fadeIn 0.2s forwards; }
-@keyframes fadeIn { to { opacity: 1; } }
-.modal { background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; transform: translateY(100%); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-@keyframes slideUp { to { transform: translateY(0); } }
-
-.modal-handle { width: 40px; height: 5px; background: var(--border-color); border-radius: 3px; margin: 12px auto; }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 0 20px 16px; border-bottom: 1px solid var(--border-color); }
-.modal-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
-.modal-close { background: var(--bg-page); border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.modal-body { padding: 20px; overflow-y: auto; }
-
-/* Forms */
-.field-group { margin-bottom: 18px; }
-.field-label { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; display: block; }
-.field-input { width: 100%; border: 1.5px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 15px; background: var(--bg-page); color: var(--text-main); outline: none; transition: all 0.2s; }
-.field-input:focus { border-color: var(--primary); background: var(--surface); box-shadow: 0 0 0 3px var(--primary-light); }
-.field-input[readonly] { opacity: 0.7; background: var(--bg-page); border-style: dashed; }
-
-.area-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-.area-box { background: var(--bg-page); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
-.area-box span { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
-.area-box input { width: 100%; border: none; background: var(--surface); border-radius: 4px; padding: 8px; text-align: center; font-size: 16px; font-weight: 600; color: var(--text-main); box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); }
-.area-box input:focus { outline: 1.5px solid var(--primary); }
-
-/* Breakdown Sub-section */
-.bd-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-top: 16px; border-top: 1px dashed var(--border-color); }
-.btn-add-sm { background: var(--bg-edit); color: var(--color-edit); border: none; border-radius: 20px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
-.bd-card { background: var(--surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; margin-bottom: 12px; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-.bd-row { display: flex; gap: 8px; margin-bottom: 8px; }
-.bd-row select { flex: 1; border: 1px solid var(--border-color); background: var(--bg-page); border-radius: 6px; padding: 8px; font-size: 13px; color: var(--text-main); outline: none; }
-.btn-del-sm { position: absolute; top: -8px; left: -8px; background: var(--color-del); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-.warn-box { padding: 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px; }
-.warn-red { background: var(--bg-del); color: var(--color-del); border: 1px solid #ffcdd2; }
-.warn-green { background: var(--primary-light); color: var(--primary); border: 1px solid #C8E6C9; }
-
-/* Modal Footer */
-.modal-footer { padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; gap: 12px; background: var(--surface); }
-.btn-primary { flex: 2; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; }
-.btn-secondary { flex: 1; background: var(--bg-page); color: var(--text-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: flex-end; justify-content: center; z-index: 2000; }
+.modal { background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; }
+.modal-header { display: flex; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-color); align-items: center; }
+.modal-title { font-size: 16px; font-weight: 700; }
+.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
+.modal-body { padding: 20px; }
+.field-group { margin-bottom: 16px; }
+.field-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; display: block; }
+.field-input { width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; background: var(--bg-page); outline: none; }
+.field-input:focus { border-color: var(--primary); }
+.area-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.area-box { background: var(--bg-page); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px; text-align: center; }
+.area-box span { font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 4px; }
+.area-box input { width: 100%; border: none; background: var(--surface); text-align: center; font-size: 14px; padding: 4px; }
+.modal-footer { padding: 16px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; background: var(--surface); }
+.btn-primary { flex: 2; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); padding: 12px; font-weight: 700; cursor: pointer; }
+.btn-secondary { flex: 1; background: var(--bg-page); color: var(--text-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; font-weight: 600; cursor: pointer; }
 
 /* Toast */
-.toast { position: fixed; bottom: max(90px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(20px); background: #323232; color: #fff; padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; animation: toastAnim 2.5s ease forwards; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-@keyframes toastAnim { 10%{opacity:1;transform:translateX(-50%) translateY(0)} 80%{opacity:1;transform:translateX(-50%) translateY(0)} 100%{opacity:0;transform:translateX(-50%) translateY(20px)} }
-
-/* Excel Modal specifics */
-.drop-zone { border: 2px dashed var(--primary); border-radius: var(--radius-md); padding: 30px 20px; text-align: center; background: var(--primary-light); cursor: pointer; margin-bottom: 16px; }
-.drop-icon { font-size: 40px; margin-bottom: 10px; }
-.drop-text { font-size: 14px; color: var(--primary); font-weight: 600; }
-.excel-btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
-.btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); border-radius: var(--radius-sm); padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; text-align: center; }
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #323232; color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 13px; z-index: 9999; }
 </style>
 </head>
 <body>
-<div id="app">
+
+<div id="login-view">
+  <div class="login-card">
+    <img src="https://cdn-icons-png.flaticon.com/512/10543/10543163.png" alt="Logo" class="login-logo">
+    <div class="login-title">جمعية الناصريه الزراعيه</div>
+    
+    <input type="text" id="login-user" class="login-input" placeholder="اسم المستخدم" autocomplete="off">
+    <input type="password" id="login-pass" class="login-input" placeholder="كلمة المرور">
+    
+    <button class="btn-login" onclick="attemptLogin()">تسجيل الدخول</button>
+    <div id="login-err" class="login-error">بيانات الدخول غير صحيحة!</div>
+    
+    <div style="margin-top:20px; font-size:11px; color:#aaa; text-align:right;">
+      للتجربة:<br>المدير: admin / admin123<br>الموظف: user / user123
+    </div>
+  </div>
+</div>
+
+<div id="app-view">
+  
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>جمعية الناصريه</h2>
+      <p id="sidebar-role-text">بوابة النظام</p>
+    </div>
+    <div class="sidebar-menu">
+      <a class="menu-item" onclick="toggleSidebar()">
+        <span class="menu-icon">🌾</span> قسم الحيازات (الحالي)
+      </a>
+      <a class="menu-item">
+        <span class="menu-icon">🌱</span> قسم التقاوي والمبيدات
+      </a>
+      <a class="menu-item">
+        <span class="menu-icon">🚜</span> قسم الأسمدة والكيماوي
+      </a>
+      <a class="menu-item admin-only">
+        <span class="menu-icon">💰</span> الخزينة والحسابات
+      </a>
+      <a class="menu-item admin-only">
+        <span class="menu-icon">👥</span> شئون العاملين
+      </a>
+      <a class="menu-item admin-only">
+        <span class="menu-icon">⚙️</span> إعدادات النظام
+      </a>
+    </div>
+    <button class="btn-logout" onclick="logout()">🚪 تسجيل الخروج</button>
+  </div>
+
   <div class="header">
-    <div class="header-top">
-      <div class="title-area">
-        <div class="app-logo">🌾</div>
-        <div>
-          <h1>حيازات برو</h1>
-          <div class="header-sub" id="header-sub">جاري مزامنة البيانات...</div>
-        </div>
+    <div class="header-right">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="header-titles">
+        <h1>جمعية الناصريه الزراعيه</h1>
+        <p id="header-sub">جاري المزامنة...</p>
       </div>
-      <div class="header-btns">
-        <button class="btn-icon" onclick="printAllRecords()" title="طباعة">🖨️</button>
-        <button class="btn-icon" onclick="openExcelModal()" title="استيراد وتصدير إكسيل">📊</button>
-      </div>
+    </div>
+    <div class="header-btns">
+      <button class="btn-icon" onclick="openPrintDialog()" title="طباعة">🖨️</button>
     </div>
   </div>
   
@@ -174,15 +183,13 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
       <select id="search-type" class="search-filter" onchange="renderList()">
         <option value="all">الكل</option>
         <option value="id">رقم الحيازة</option>
+        <option value="nid">الرقم القومي</option>
         <option value="name">الاسم</option>
-        <option value="basin">الحوض</option>
       </select>
       <div class="search-input-wrap">
         <input type="search" id="search-input" placeholder="ابحث هنا..." oninput="renderList()" />
-        <span style="font-size: 16px; opacity: 0.5;">🔍</span>
       </div>
     </div>
-
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-val" id="stat-count">0</div>
@@ -196,330 +203,221 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
   </div>
   
   <div class="list-wrap" id="list-wrap"></div>
-
-  <button class="fab" onclick="openAdd()">
-    <span>➕</span> إضافة حيازة
-  </button>
+  <button class="fab" onclick="openAdd()">➕ إضافة حيازة</button>
 </div>
 
 <div id="modal-root"></div>
-<input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)" style="display:none" />
 
 <script>
+// ================= AUTHENTICATION & ROLES =================
+let currentUserRole = null; // 'admin' or 'user'
+
+function attemptLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  const err = document.getElementById('login-err');
+  
+  if (user === 'admin' && pass === 'admin123') {
+    currentUserRole = 'admin';
+    completeLogin();
+  } else if (user === 'user' && pass === 'user123') {
+    currentUserRole = 'user';
+    completeLogin();
+  } else {
+    err.style.display = 'block';
+  }
+}
+
+function completeLogin() {
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('app-view').style.display = 'flex';
+  document.getElementById('sidebar-role-text').textContent = currentUserRole === 'admin' ? 'صلاحيات: مدير النظام' : 'صلاحيات: موظف';
+  
+  // إخفاء/إظهار القوائم الإدارية في الـ Sidebar
+  const adminItems = document.querySelectorAll('.admin-only');
+  adminItems.forEach(item => {
+    item.style.display = currentUserRole === 'admin' ? 'flex' : 'none';
+  });
+
+  loadData();
+}
+
+function logout() {
+  currentUserRole = null;
+  toggleSidebar();
+  document.getElementById('app-view').style.display = 'none';
+  document.getElementById('login-view').style.display = 'flex';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-err').style.display = 'none';
+}
+
+// ================= SIDEBAR LOGIC =================
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('active');
+  document.getElementById('sidebar-overlay').classList.toggle('active');
+}
+
+// ================= CORE APP LOGIC =================
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4H9xj3Ck71vcuGW9g7J1mmVxwhV6V37nfSolb-KaRGGgeNGBfNsv90DgVae2lW9yQog/exec';
 let db = [];
 let editId = null;
-let importPreviewData = [];
-let currentBreakdowns = [];
-
-// ================= CORE FUNCTIONS =================
 
 async function loadData() {
   try {
     const response = await fetch(SCRIPT_URL);
     const data = await response.json();
-    // 💡 الإصلاح الجذري: تحويل كل الأرقام إلى نصوص وحذف الأصفار الزائدة لتجنب أي تعارض
-    db = data.map(r => ({
-      ...r,
-      id: String(r.id).replace(/^0+/, '') || '0'
-    }));
+    db = data.map(r => ({ ...r, id: String(r.id).replace(/^0+/, '') || '0', nationalId: r.nationalId || '' }));
     renderList();
   } catch(error) {
-    document.getElementById('header-sub').textContent = '⚠️ خطأ في الاتصال بالانترنت';
+    document.getElementById('header-sub').textContent = '⚠️ يعمل أوفلاين/بدون اتصال';
   }
 }
-window.onload = loadData;
 
 function areaToFeddan(f,q,s){ return (parseFloat(f)||0)+(parseFloat(q)||0)/24+(parseFloat(s)||0)/576; }
-function fmtArea(f,q,s){ let p=[]; if(+f)p.push(f+' فدان'); if(+q)p.push(q+' قيراط'); if(+s)p.push(s+' سهم'); return p.length?p.join(' و '):'—'; }
-function fmtTotal(f,q,s){ return areaToFeddan(f,q,s).toFixed(2); }
-
-function genId(){ 
-  const m = db.reduce((a,r)=>Math.max(a, parseInt(r.id)||0), 0); 
-  return String(m + 1); 
-}
+function fmtArea(f,q,s){ return `${f||0} فدان, ${q||0} قيراط, ${s||0} سهم`; }
 
 function toast(msg){ 
   const t=document.createElement('div'); t.className='toast'; t.textContent=msg; 
-  document.body.appendChild(t); setTimeout(()=>t.remove(), 2600); 
-}
-
-function updateStats(){
-  document.getElementById('stat-count').textContent = db.length;
-  const tot = db.reduce((a,r)=> a + areaToFeddan(r.feddan, r.qirat, r.sahm), 0);
-  document.getElementById('stat-area').textContent = tot.toFixed(2);
-  document.getElementById('header-sub').textContent = 'محدث الآن';
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 2500); 
 }
 
 function getFiltered(){
-  const q = (document.getElementById('search-input').value||'').trim().toLowerCase();
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
   const type = document.getElementById('search-type').value;
   let list = db.slice();
-  
   if(q) {
     list = list.filter(r => {
-      const idStr = String(r.id).toLowerCase();
-      const nameStr = (r.name||'').toLowerCase();
-      const basinStr = (r.basin||'').toLowerCase();
-      
-      if(type === 'name') return nameStr.includes(q);
-      if(type === 'id') return idStr.includes(q);
-      if(type === 'basin') return basinStr.includes(q);
-      return nameStr.includes(q) || idStr.includes(q) || basinStr.includes(q);
+      if(type === 'name') return (r.name||'').toLowerCase().includes(q);
+      if(type === 'id') return String(r.id).includes(q);
+      if(type === 'nid') return String(r.nationalId||'').includes(q);
+      return (r.name||'').toLowerCase().includes(q) || String(r.id).includes(q) || String(r.nationalId||'').includes(q);
     });
   }
-  list.sort((a,b) => (a.name||'').localeCompare((b.name||''),'ar'));
   return list;
 }
 
 function renderList(){
   const wrap = document.getElementById('list-wrap');
   const list = getFiltered();
-  updateStats();
   
-  if(!list.length){ 
-    wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">🌾</div><div>لا توجد بيانات متاحة<br>اضغط على زر الإضافة بالأسفل</div></div>`; 
-    return; 
-  }
+  document.getElementById('stat-count').textContent = db.length;
+  document.getElementById('stat-area').textContent = db.reduce((a,r)=> a + areaToFeddan(r.feddan, r.qirat, r.sahm), 0).toFixed(2);
+  document.getElementById('header-sub').textContent = 'النظام يعمل';
+
+  if(!list.length){ wrap.innerHTML=`<div class="empty-state">لا توجد بيانات</div>`; return; }
   
   wrap.innerHTML = list.map(r => `
     <div class="record-card">
       <div class="rec-body" onclick="openDetail('${r.id}')">
         <div class="rec-header">
-          <div class="rec-title-wrap">
-            <span class="rec-name">${r.name}</span>
-            <span class="rec-id">رقم: ${r.id}</span>
-          </div>
+          <span class="rec-name">${r.name}</span>
+          <span class="rec-id">#${r.id}</span>
         </div>
+        ${r.nationalId ? `<span class="rec-nid">الرقم القومي: ${r.nationalId}</span>` : ''}
         <div class="rec-badges">
-          <span class="badge badge-area">📏 ${fmtArea(r.feddan,r.qirat,r.sahm)}</span>
-          <span class="badge badge-basin">📍 ${r.basin||'بدون حوض'}</span>
+          <span class="badge">📏 ${fmtArea(r.feddan,r.qirat,r.sahm)}</span>
+          <span class="badge">📍 ${r.basin||'—'}</span>
         </div>
       </div>
       <div class="rec-actions">
-        <button class="action-btn edit" onclick="openEdit('${r.id}')">✏️ تعديل</button>
-        <button class="action-btn copy" onclick="copyRecord('${r.id}')">📋 نسخ</button>
-        <button class="action-btn del" onclick="confirmDelete('${r.id}')">🗑 حذف</button>
+        <button class="action-btn edit" onclick="openEdit('${r.id}')">تعديل</button>
+        ${currentUserRole === 'admin' ? `<button class="action-btn del" onclick="confirmDelete('${r.id}')">حذف</button>` : ''}
       </div>
     </div>`).join('');
 }
 
-// ================= MODALS & FORMS =================
-
+// ================= MODALS (ADD/EDIT/DETAIL) =================
 function showFormModal(rec){
   const isEdit = !!rec;
-  
-  currentBreakdowns = [];
-  if(isEdit && rec.breakdowns) {
-    try { currentBreakdowns = typeof rec.breakdowns === 'string' ? JSON.parse(rec.breakdowns) : rec.breakdowns; } catch(e) {}
-  }
+  const nextId = String(db.reduce((a,r)=>Math.max(a, parseInt(r.id)||0), 0) + 1);
 
   document.getElementById('modal-root').innerHTML=`
     <div class="modal-backdrop" onclick="bgClose(event)">
       <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-handle"></div>
         <div class="modal-header">
-          <span class="modal-title">${isEdit?'تعديل بيانات الحيازة':'تسجيل حيازة جديدة'}</span>
+          <span class="modal-title">${isEdit?'تعديل':'إضافة'} حيازة</span>
           <button class="modal-close" onclick="closeModal()">✕</button>
         </div>
         <div class="modal-body">
           <div class="field-group">
             <label class="field-label">رقم الحيازة</label>
-            <input class="field-input" id="f-id" type="text" value="${isEdit?rec.id:genId()}" ${isEdit?'readonly':''} />
+            <input class="field-input" id="f-id" type="text" value="${isEdit?rec.id:nextId}" ${isEdit?'readonly':''} />
           </div>
           <div class="field-group">
             <label class="field-label">اسم الحائز *</label>
-            <input class="field-input" id="f-name" type="text" value="${isEdit?rec.name:''}" placeholder="الاسم ثلاثي أو رباعي" />
+            <input class="field-input" id="f-name" type="text" value="${isEdit?rec.name:''}" />
           </div>
           <div class="field-group">
-            <label class="field-label">اسم الحوض *</label>
-            <input class="field-input" id="f-basin" type="text" value="${isEdit?rec.basin:''}" placeholder="مثال: حوض النيل" />
+            <label class="field-label">الرقم القومي (اختياري)</label>
+            <input class="field-input" id="f-nid" type="tel" maxlength="14" value="${isEdit?(rec.nationalId||''):''}" placeholder="14 رقم" />
           </div>
           <div class="field-group">
-            <label class="field-label">المساحة الكلية</label>
+            <label class="field-label">اسم الحوض</label>
+            <input class="field-input" id="f-basin" type="text" value="${isEdit?rec.basin:''}" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">المساحة</label>
             <div class="area-grid">
-              <div class="area-box"><span>فدان</span><input id="f-fed" type="number" min="0" value="${isEdit?rec.feddan:0}" oninput="checkAreaBalance()" /></div>
-              <div class="area-box"><span>قيراط</span><input id="f-qir" type="number" min="0" max="23" value="${isEdit?rec.qirat:0}" oninput="checkAreaBalance()" /></div>
-              <div class="area-box"><span>سهم</span><input id="f-sahm" type="number" min="0" max="23" value="${isEdit?rec.sahm:0}" oninput="checkAreaBalance()" /></div>
+              <div class="area-box"><span>فدان</span><input id="f-fed" type="number" min="0" value="${isEdit?rec.feddan:0}" /></div>
+              <div class="area-box"><span>قيراط</span><input id="f-qir" type="number" min="0" max="23" value="${isEdit?rec.qirat:0}" /></div>
+              <div class="area-box"><span>سهم</span><input id="f-sahm" type="number" min="0" max="23" value="${isEdit?rec.sahm:0}" /></div>
             </div>
           </div>
-          
-          <div class="field-group">
-            <div class="bd-header">
-              <label class="field-label" style="margin:0">تقسيم المساحة من الداخل</label>
-              <button class="btn-add-sm" onclick="addBd()">+ تفاصيل</button>
-            </div>
-            <div id="breakdown-list"></div>
-            <div id="area-warning" class="warn-box" style="display:none"></div>
-          </div>
-
         </div>
         <div class="modal-footer">
-          <button class="btn-secondary" onclick="closeModal()">رجوع</button>
-          <button class="btn-primary" onclick="saveRecord()">${isEdit?'حفظ التعديلات':'إضافة الحيازة'}</button>
+          <button class="btn-secondary" onclick="closeModal()">إلغاء</button>
+          <button class="btn-primary" onclick="saveRecord()">حفظ البيانات</button>
         </div>
       </div>
     </div>`;
-  
-  setTimeout(()=>{ renderBreakdowns(); }, 100);
 }
-
-function renderBreakdowns() {
-  const container = document.getElementById('breakdown-list');
-  if(!container) return;
-  container.innerHTML = currentBreakdowns.map((b, i) => `
-    <div class="bd-card">
-      <button class="btn-del-sm" onclick="removeBd(${i})">✕</button>
-      <div class="bd-row">
-        <select onchange="updateBd(${i}, 'type', this.value)">
-          <option value="محصول" ${b.type==='محصول'?'selected':''}>محصول منزرع</option>
-          <option value="تعدي" ${b.type==='تعدي'?'selected':''}>تعدي</option>
-          <option value="تبوير" ${b.type==='تبوير'?'selected':''}>تبوير</option>
-          <option value="منافع" ${b.type==='منافع'?'selected':''}>منافع</option>
-        </select>
-        ${b.type === 'محصول' ? `
-        <select onchange="updateBd(${i}, 'name', this.value)">
-          <option value="" disabled ${!b.name?'selected':''}>اختر المحصول</option>
-          <option value="جوافة" ${b.name==='جوافة'?'selected':''}>جوافة</option>
-          <option value="برتقال" ${b.name==='برتقال'?'selected':''}>برتقال</option>
-          <option value="مانجو" ${b.name==='مانجو'?'selected':''}>مانجو</option>
-          <option value="كوسة" ${b.name==='كوسة'?'selected':''}>كوسة</option>
-          <option value="ذرة" ${b.name==='ذرة'?'selected':''}>ذرة</option>
-          <option value="شعير" ${b.name==='شعير'?'selected':''}>شعير</option>
-          <option value="أخرى" ${b.name==='أخرى'?'selected':''}>أخرى...</option>
-        </select>` : ''}
-      </div>
-      <div class="area-grid" style="gap:8px">
-        <div class="area-box" style="padding:6px"><span>فدان</span><input type="number" min="0" value="${b.fed}" oninput="updateBd(${i}, 'fed', this.value)"></div>
-        <div class="area-box" style="padding:6px"><span>قيراط</span><input type="number" min="0" max="23" value="${b.qir}" oninput="updateBd(${i}, 'qir', this.value)"></div>
-        <div class="area-box" style="padding:6px"><span>سهم</span><input type="number" min="0" max="23" value="${b.sahm}" oninput="updateBd(${i}, 'sahm', this.value)"></div>
-      </div>
-    </div>
-  `).join('');
-  checkAreaBalance();
-}
-
-function addBd() { currentBreakdowns.push({ type: 'محصول', name: '', fed: 0, qir: 0, sahm: 0 }); renderBreakdowns(); }
-function removeBd(index) { currentBreakdowns.splice(index, 1); renderBreakdowns(); }
-function updateBd(index, field, value) {
-  currentBreakdowns[index][field] = field === 'type' || field === 'name' ? value : parseFloat(value) || 0;
-  if(field === 'type' && value !== 'محصول') currentBreakdowns[index].name = value; 
-  if(field === 'type') renderBreakdowns(); else checkAreaBalance();
-}
-
-function checkAreaBalance() {
-  const totF = parseFloat(document.getElementById('f-fed').value) || 0;
-  const totQ = parseFloat(document.getElementById('f-qir').value) || 0;
-  const totS = parseFloat(document.getElementById('f-sahm').value) || 0;
-  const totalInSahms = (totF * 24 * 24) + (totQ * 24) + totS;
-  
-  let bdInSahms = 0;
-  currentBreakdowns.forEach(b => { bdInSahms += ((parseFloat(b.fed)||0) * 24 * 24) + ((parseFloat(b.qir)||0) * 24) + (parseFloat(b.sahm)||0); });
-
-  const warnEl = document.getElementById('area-warning');
-  if(currentBreakdowns.length === 0) { warnEl.style.display = 'none'; return; }
-  
-  warnEl.style.display = 'block';
-  const diff = totalInSahms - bdInSahms;
-  
-  if (Math.abs(diff) < 0.01) {
-    warnEl.className = 'warn-box warn-green'; warnEl.textContent = '✓ المساحة مقسمة بشكل صحيح ومطابق';
-  } else if (diff > 0) {
-    let dFed = Math.floor(diff / (24 * 24)), rem = diff % (24 * 24), dQir = Math.floor(rem / 24), dSahm = Math.round(rem % 24);
-    warnEl.className = 'warn-box warn-red'; warnEl.textContent = `⚠️ مساحة متبقية غير مقسمة: ${fmtArea(dFed, dQir, dSahm)}`;
-  } else {
-    warnEl.className = 'warn-box warn-red'; warnEl.textContent = '❌ مجموع التقسيم أكبر من مساحة الحيازة!';
-  }
-}
-
-// ================= ACTIONS =================
 
 async function saveRecord(){
   const id = String(document.getElementById('f-id').value).trim();
   const name = document.getElementById('f-name').value.trim();
+  const nid = document.getElementById('f-nid').value.trim();
   const basin = document.getElementById('f-basin').value.trim();
   const feddan = document.getElementById('f-fed').value||'0';
   const qirat = document.getElementById('f-qir').value||'0';
   const sahm = document.getElementById('f-sahm').value||'0';
   
-  if(!name||!basin){ toast('⚠️ يرجى كتابة الاسم والحوض'); return; }
+  if(!name){ toast('⚠️ اكتب الاسم'); return; }
   
-  const record = { id, name, basin, feddan, qirat, sahm, breakdowns: JSON.stringify(currentBreakdowns), created: new Date().toISOString() };
+  const record = { id, name, nationalId: nid, basin, feddan, qirat, sahm, created: new Date().toISOString() };
 
   if(!editId){
-    if(db.find(r => String(r.id) === id)){ toast('⚠️ رقم الحيازة مسجل مسبقاً'); return; }
+    if(db.find(r => String(r.id) === id)){ toast('⚠️ الرقم موجود مسبقاً'); return; }
     db.push(record);
   } else {
-    // 💡 الإصلاح الجذري: البحث والتطابق باستخدام النصوص بدقة
     const idx = db.findIndex(r => String(r.id) === String(editId));
-    if(idx !== -1) {
-      record.created = db[idx].created;
-      db[idx] = record;
-    }
+    if(idx !== -1) { record.created = db[idx].created; db[idx] = record; }
   }
   
-  const isEditing = !!editId;
-  closeModal(); 
-  renderList(); 
-  toast('جاري الحفظ...');
-
-  try {
-    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', record: record }) });
-    toast(isEditing?'✓ تم التحديث بنجاح':'✓ تمت الإضافة بنجاح');
-  } catch (error) { toast('❌ خطأ في الإرسال للسحابة'); }
+  closeModal(); renderList(); toast('جاري الحفظ...');
+  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', record }) }); toast('✓ تم الحفظ'); } catch(e){}
 }
 
 function openAdd(){ editId = null; showFormModal(null); }
-function openEdit(id){ 
-  const rec = db.find(r => String(r.id) === String(id));
-  if(rec) { editId = String(id); showFormModal(rec); }
-}
+function openEdit(id){ const rec = db.find(r => String(r.id) === String(id)); if(rec){ editId=id; showFormModal(rec); } }
 
 function openDetail(id){
   const rec = db.find(r => String(r.id) === String(id)); if(!rec) return;
-  
-  let bdHtml = '';
-  if(rec.breakdowns) {
-    try {
-      const bds = typeof rec.breakdowns === 'string' ? JSON.parse(rec.breakdowns) : rec.breakdowns;
-      if(bds.length > 0) {
-        bdHtml = `<div style="margin-top:16px; border-top:1px solid var(--border-color); padding-top:16px">
-          <div style="font-size:13px; color:var(--text-muted); margin-bottom:10px; font-weight:600">تفاصيل التقسيم الداخلي:</div>
-          ${bds.map(b => `<div style="background:var(--bg-page); padding:10px; border-radius:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:600">${b.type === 'محصول' ? '🌾 ' + (b.name||'محصول') : '🛑 ' + b.type}</span>
-              <span style="color:var(--primary); font-size:13px">${fmtArea(b.fed, b.qir, b.sahm)}</span>
-            </div>`).join('')}
-        </div>`;
-      }
-    } catch(e){}
-  }
-
   document.getElementById('modal-root').innerHTML=`
     <div class="modal-backdrop" onclick="bgClose(event)">
       <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-handle"></div>
-        <div class="modal-body" style="padding-top:10px">
-          <div style="text-align:center; margin-bottom:20px">
-            <div style="font-size:12px; color:var(--text-muted)">رقم الحيازة</div>
-            <div style="font-size:20px; font-weight:700; color:var(--primary)">${rec.id}</div>
-            <h2 style="margin-top:10px; color:var(--text-main)">${rec.name}</h2>
-          </div>
-          <div style="background:var(--bg-page); border-radius:var(--radius-md); padding:16px; margin-bottom:16px">
-            <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid var(--border-color); padding-bottom:12px">
-              <span style="color:var(--text-muted)">الحوض</span><span style="font-weight:600">${rec.basin}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid var(--border-color); padding-bottom:12px">
-              <span style="color:var(--text-muted)">المساحة الكلية</span><span style="font-weight:600; color:var(--primary)">${fmtArea(rec.feddan, rec.qirat, rec.sahm)}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between">
-              <span style="color:var(--text-muted)">الإجمالي بالفدان</span><span style="font-weight:600">${fmtTotal(rec.feddan, rec.qirat, rec.sahm)}</span>
-            </div>
-          </div>
-          ${bdHtml}
+        <div class="modal-header">
+          <span class="modal-title">رقم الحيازة: ${rec.id}</span>
+          <button class="modal-close" onclick="closeModal()">✕</button>
         </div>
-        <div class="modal-footer" style="gap:8px">
-          <button class="btn-secondary" style="flex:1" onclick="closeModal()">إغلاق</button>
-          <button class="action-btn edit" style="flex:1; padding:14px; font-size:15px; border-radius:var(--radius-sm)" onclick="openEdit('${rec.id}')">تعديل</button>
+        <div class="modal-body" style="line-height:1.8">
+          <h2 style="color:var(--primary); margin-bottom:10px">${rec.name}</h2>
+          ${rec.nationalId ? `<div style="color:var(--text-muted); font-size:13px; margin-bottom:15px;">الرقم القومي: <b>${rec.nationalId}</b></div>` : ''}
+          <div style="background:var(--bg-page); padding:12px; border-radius:8px;">
+            <div><b>الحوض:</b> ${rec.basin}</div>
+            <div><b>المساحة:</b> ${fmtArea(rec.feddan, rec.qirat, rec.sahm)}</div>
+            <div><b>الإجمالي (فدان):</b> ${areaToFeddan(rec.feddan, rec.qirat, rec.sahm).toFixed(2)}</div>
+          </div>
         </div>
       </div>
     </div>`;
@@ -529,137 +427,90 @@ function confirmDelete(id){
   const rec = db.find(r => String(r.id) === String(id));
   document.getElementById('modal-root').innerHTML=`
     <div class="modal-backdrop">
-      <div class="modal">
-        <div class="modal-body" style="text-align:center; padding:30px 20px">
-          <div style="font-size:50px; margin-bottom:10px">⚠️</div>
-          <h3 style="color:var(--color-del); margin-bottom:10px">تأكيد الحذف</h3>
-          <p style="color:var(--text-muted); line-height:1.6">هل أنت متأكد من حذف حيازة<br><strong>${rec.name}</strong>؟</p>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-secondary" onclick="closeModal()">إلغاء</button>
-          <button class="btn-primary" style="background:var(--color-del)" onclick="deleteRecord('${id}')">نعم، احذف</button>
+      <div class="modal" style="text-align:center; padding:20px;">
+        <h3 style="color:var(--color-del); margin-bottom:15px">تأكيد الحذف</h3>
+        <p>حذف حيازة ${rec.name}؟</p>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button class="btn-secondary" style="flex:1" onclick="closeModal()">إلغاء</button>
+          <button class="btn-primary" style="flex:1; background:var(--color-del)" onclick="deleteRecord('${id}')">حذف</button>
         </div>
       </div>
     </div>`;
 }
 
 async function deleteRecord(id){ 
-  db = db.filter(r => String(r.id) !== String(id)); 
-  closeModal(); renderList(); toast('جاري الحذف...');
-  try {
-    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', id: String(id) }) });
-    toast('✓ تم الحذف نهائياً');
-  } catch (error) { toast('❌ خطأ أثناء الحذف'); }
+  db = db.filter(r => String(r.id) !== String(id)); closeModal(); renderList(); toast('جاري الحذف...');
+  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', id: String(id) }) }); } catch(e){}
 }
 
-function copyRecord(id){
-  const rec = db.find(r => String(r.id) === String(id));
-  const txt = `رقم الحيازة: ${rec.id}\nالاسم: ${rec.name}\nالحوض: ${rec.basin}\nالمساحة: ${fmtArea(rec.feddan,rec.qirat,rec.sahm)}`;
-  if(navigator.share){ navigator.share({text:txt}).catch(()=>{}); }
-  else { navigator.clipboard.writeText(txt).then(()=>toast('✓ تم النسخ')).catch(()=>{}); }
-}
-
-function closeModal(){ document.getElementById('modal-root').innerHTML=''; importPreviewData=[]; currentBreakdowns=[]; editId=null; }
+function closeModal(){ document.getElementById('modal-root').innerHTML=''; editId=null; }
 function bgClose(e){ if(e.target.classList.contains('modal-backdrop')) closeModal(); }
 
-// ================= EXCEL MODAL =================
-
-function openExcelModal(){
+// ================= SMART PRINT LOGIC =================
+function openPrintDialog(){
+  if(!db.length){ toast('⚠️ لا يوجد بيانات'); return; }
   document.getElementById('modal-root').innerHTML=`
     <div class="modal-backdrop" onclick="bgClose(event)">
       <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-handle"></div>
         <div class="modal-header">
-          <span class="modal-title">مركز البيانات (Excel)</span>
+          <span class="modal-title">خيارات الطباعة</span>
           <button class="modal-close" onclick="closeModal()">✕</button>
         </div>
-        <div class="modal-body">
-          <div class="drop-zone" onclick="document.getElementById('file-input').click()">
-            <div class="drop-icon">📥</div>
-            <div class="drop-text">اضغط هنا لاستيراد ملف إكسيل</div>
-            <div style="font-size:12px; color:var(--text-muted); margin-top:5px">يدعم صيغ .xlsx و .xls</div>
-          </div>
-          <div id="import-preview-area"></div>
-          
-          <div style="margin-top:24px; border-top:1px solid var(--border-color); padding-top:20px">
-            <h4 style="margin-bottom:12px; color:var(--text-main)">أدوات إضافية</h4>
-            <div class="excel-btn-group">
-              <button class="btn-outline" onclick="exportAll()">📤 تصدير كل الحيازات إلى ملف</button>
-              <button class="btn-outline" style="border-color:var(--text-muted); color:var(--text-muted)" onclick="downloadTemplate()">📄 تحميل نموذج إكسيل فارغ</button>
-            </div>
+        <div class="modal-body" style="text-align:center;">
+          <p style="margin-bottom:20px; color:var(--text-main);">هل تريد إظهار "الرقم القومي" في كشف الطباعة؟</p>
+          <div style="display:flex; gap:10px;">
+            <button class="btn-primary" onclick="executePrint(true)">نعم، إظهار الرقم القومي</button>
+            <button class="btn-secondary" onclick="executePrint(false)">لا، طباعة عادية</button>
           </div>
         </div>
       </div>
     </div>`;
 }
 
-function downloadTemplate(){
-  const wb = XLSX.utils.book_new();
-  const wsData = [['رقم الحيازة','اسم الحائز','اسم الحوض','فدان','قيراط','سهم'], ['1','أحمد محمد','حوض النيل',3,12,0]];
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-  XLSX.utils.book_append_sheet(wb, ws, 'الحيازات');
-  XLSX.writeFile(wb, 'نموذج_الحيازات.xlsx');
-}
-
-function exportAll(){
-  if(!db.length){ toast('⚠️ لا يوجد بيانات'); return; }
-  const wb = XLSX.utils.book_new();
-  const rows = db.map(r=>[ r.id, r.name, r.basin||'', parseFloat(r.feddan)||0, parseFloat(r.qirat)||0, parseFloat(r.sahm)||0 ]);
-  const ws = XLSX.utils.aoa_to_sheet([['رقم الحيازة','اسم الحائز','اسم الحوض','فدان','قيراط','سهم'], ...rows]);
-  XLSX.utils.book_append_sheet(wb, ws, 'الحيازات');
-  XLSX.writeFile(wb, `حيازات_${new Date().getTime()}.xlsx`);
-}
-
-function printAllRecords(){
-  if(!db.length){ toast('⚠️ لا توجد بيانات للطباعة'); return; }
+function executePrint(includeNid){
+  closeModal();
   const list = getFiltered();
-  const win = window.open('', '', 'width=900,height=700');
-  let html = `<html dir="rtl"><head><title>طباعة</title><style>
-    body{font-family:Arial; margin:20px;} h2{text-align:center; color:#2E7D32;}
-    table{width:100%; border-collapse:collapse; margin-bottom:30px;} th{background:#2E7D32; color:#fff; padding:10px; border:1px solid #ccc;} td{padding:8px; border:1px solid #ccc; text-align:center;}
-  </style></head><body><h2>سجل الحيازات الزراعية</h2><table>
-    <tr><th>م</th><th>رقم</th><th>الاسم</th><th>الحوض</th><th>سهم</th><th>قيراط</th><th>فدان</th></tr>`;
+  const win = window.open('', '', 'width=1000,height=700');
+  
+  let html = `<html dir="rtl"><head><title>طباعة حيازات - جمعية الناصريه</title><style>
+    body{font-family:Arial, sans-serif; margin:20px;} 
+    h1{text-align:center; color:#2E7D32; margin-bottom:5px;}
+    h3{text-align:center; color:#555; margin-top:0; margin-bottom:20px;}
+    table{width:100%; border-collapse:collapse; margin-bottom:30px;} 
+    th{background:#2E7D32; color:#fff; padding:10px; border:1px solid #aaa;} 
+    td{padding:8px; border:1px solid #aaa; text-align:center;}
+    tr:nth-child(even){background:#f9f9f9;}
+  </style></head><body>
+  <h1>جمعية الناصريه الزراعيه</h1>
+  <h3>كشف سجل الحيازات</h3>
+  <table>
+    <tr>
+      <th>م</th>
+      <th>رقم</th>
+      <th>الاسم</th>
+      ${includeNid ? '<th>الرقم القومي</th>' : ''}
+      <th>الحوض</th>
+      <th>سهم</th>
+      <th>قيراط</th>
+      <th>فدان</th>
+    </tr>`;
+    
   list.forEach((r, i) => {
-    html += `<tr><td>${i+1}</td><td>${r.id}</td><td>${r.name}</td><td>${r.basin}</td><td>${r.sahm||0}</td><td>${r.qirat||0}</td><td>${r.feddan||0}</td></tr>`;
+    html += `<tr>
+      <td>${i+1}</td>
+      <td>${r.id}</td>
+      <td>${r.name}</td>
+      ${includeNid ? `<td>${r.nationalId || '-'}</td>` : ''}
+      <td>${r.basin}</td>
+      <td>${r.sahm||0}</td>
+      <td>${r.qirat||0}</td>
+      <td>${r.feddan||0}</td>
+    </tr>`;
   });
+  
   win.document.write(html + `</table></body></html>`);
-  win.document.close(); setTimeout(()=>win.print(), 300);
-}
-
-// ==== دوال رفع الإكسيل البسيطة ====
-function handleFileSelect(e){
-  const file = e.target.files[0]; if(!file) return; e.target.value='';
-  const reader = new FileReader();
-  reader.onload = e => {
-    try{
-      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-      processImportRows(rows);
-    } catch(err){ toast('❌ خطأ في الملف'); }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function processImportRows(rows){
-  if(rows.length<2) return toast('الملف فارغ');
-  importPreviewData = []; let nextId = parseInt(genId());
-  for(let i=1; i<rows.length; i++){
-    if(!rows[i][1]) continue; // Name is required
-    let id = String(rows[i][0]||'').trim(); if(!id) id = String(nextId++);
-    importPreviewData.push({ id, name: String(rows[i][1]), basin: String(rows[i][2]||''), feddan: rows[i][3]||0, qirat: rows[i][4]||0, sahm: rows[i][5]||0, status: db.find(x=>String(x.id)===id)?'update':'new' });
-  }
-  document.getElementById('import-preview-area').innerHTML = `<div style="background:var(--primary-light); padding:10px; border-radius:8px; text-align:center; margin-bottom:10px">تم العثور على <b>${importPreviewData.length}</b> سجل صالح.</div><button class="btn-primary" style="width:100%" onclick="confirmImport()">🚀 تأكيد الاستيراد والحفظ</button>`;
-}
-
-async function confirmImport(){
-  closeModal(); toast('جاري الحفظ في السحابة...');
-  for(const r of importPreviewData) {
-    const record = {id:r.id, name:r.name, basin:r.basin, feddan:r.feddan, qirat:r.qirat, sahm:r.sahm, created:new Date().toISOString()};
-    const idx = db.findIndex(x=>String(x.id)===r.id);
-    if(idx>=0) db[idx]=record; else db.push(record);
-    try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', record }) }); } catch(e){}
-  }
-  renderList(); toast('✓ اكتمل الاستيراد');
+  win.document.close(); 
+  setTimeout(()=>win.print(), 400);
 }
 </script>
 </body>

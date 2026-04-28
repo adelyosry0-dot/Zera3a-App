@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#2E7D32">
-<title>جمعية الناصريه الزراعيه</title>
+<title>جمعية الناصرية الزراعية</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* ================= CSS RESET & VARIABLES ================= */
@@ -16,103 +16,71 @@
   --shadow-card: 0 4px 15px rgba(0,0,0,0.05);
   --color-edit: #1976D2; --bg-edit: #E3F2FD; --color-copy: #607D8B; --bg-copy: #ECEFF1; --color-del: #D32F2F; --bg-del: #FFEBEE;
 }
-
 html, body { height: 100%; background: var(--bg-page); color: var(--text-main); overflow-x: hidden; }
 
 /* ================= LOGIN SCREEN ================= */
-#login-view { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 20px; z-index: 9999; position: relative; }
+#login-view { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 20px; z-index: 9999; position: fixed; inset: 0; }
 .login-card { background: var(--surface); padding: 30px 24px; border-radius: var(--radius-lg); width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; }
-/* ضع رابط الصورة الخاصة بك مكان رابط الصورة الافتراضي في الـ HTML بالأسفل */
 .login-logo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto 16px; border: 3px solid var(--primary-light); background: #f0f0f0; }
 .login-title { font-size: 22px; font-weight: 700; color: var(--primary); margin-bottom: 24px; }
 .login-input { width: 100%; border: 1.5px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px; font-size: 15px; margin-bottom: 16px; background: var(--bg-page); outline: none; }
-.login-input:focus { border-color: var(--primary); }
-.btn-login { width: 100%; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-.btn-login:active { transform: scale(0.98); background: var(--secondary); }
+.btn-login { width: 100%; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer; }
 .login-error { color: var(--color-del); font-size: 13px; margin-top: 10px; display: none; }
 
-/* ================= MAIN APP CONTAINER ================= */
-#app-view { display: none; max-width: 500px; margin: 0 auto; height: 100vh; flex-direction: column; background: var(--bg-page); position: relative; }
+/* ================= APP LAYOUT ================= */
+#app-view { display: none; height: 100vh; flex-direction: column; max-width: 600px; margin: 0 auto; background: var(--bg-page); position: relative; }
 
-/* ================= SIDEBAR ================= */
+/* Sidebar */
 .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; opacity: 0; visibility: hidden; transition: 0.3s; }
 .sidebar-overlay.active { opacity: 1; visibility: visible; }
-.sidebar { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: var(--surface); z-index: 1001; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -5px 0 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+.sidebar { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: var(--surface); z-index: 1001; transition: 0.3s; display: flex; flex-direction: column; }
 .sidebar.active { right: 0; }
 .sidebar-header { background: var(--primary); color: white; padding: 24px 20px; text-align: center; }
-.sidebar-header h2 { font-size: 18px; margin-bottom: 4px; }
-.sidebar-header p { font-size: 13px; opacity: 0.8; }
-.sidebar-menu { padding: 10px 0; flex: 1; overflow-y: auto; }
-.menu-item { display: flex; align-items: center; padding: 14px 20px; color: var(--text-main); font-size: 15px; font-weight: 600; cursor: pointer; border-bottom: 1px solid var(--bg-page); text-decoration: none; }
-.menu-item:hover, .menu-item:active { background: var(--primary-light); color: var(--primary); }
-.menu-item.admin-only { display: none; } /* يظهر للمدير فقط عبر الجافاسكريبت */
+.menu-item { display: flex; align-items: center; padding: 14px 20px; color: var(--text-main); font-size: 15px; font-weight: 600; cursor: pointer; border-bottom: 1px solid var(--bg-page); }
+.menu-item.active { background: var(--primary-light); color: var(--primary); border-right: 4px solid var(--primary); }
+.menu-item.admin-only { display: none; }
 .menu-icon { margin-left: 12px; font-size: 18px; }
-.btn-logout { margin: 20px; background: var(--bg-del); color: var(--color-del); border: none; padding: 12px; border-radius: var(--radius-sm); font-weight: bold; cursor: pointer; }
+.btn-logout { margin: 20px; background: var(--bg-del); color: var(--color-del); border: none; padding: 12px; border-radius: var(--radius-sm); cursor: pointer; font-weight: bold; }
 
-/* ================= HEADER ================= */
-.header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); flex-shrink: 0; border-bottom-left-radius: var(--radius-lg); border-bottom-right-radius: var(--radius-lg); z-index: 10; display: flex; justify-content: space-between; align-items: center; }
-.header-right { display: flex; align-items: center; gap: 12px; }
-.menu-toggle { background: transparent; border: none; color: white; font-size: 24px; cursor: pointer; }
-.header-titles h1 { font-size: 17px; font-weight: 700; }
-.header-titles p { font-size: 11px; opacity: 0.9; }
-.header-btns { display: flex; gap: 8px; }
-.btn-icon { background: rgba(255,255,255,0.2); border: none; color:white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
+/* Header */
+.header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; padding: 16px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+.menu-toggle { background: transparent; border: none; color: white; font-size: 24px; cursor: pointer; margin-left: 10px; }
+.btn-icon { background: rgba(255,255,255,0.2); border: none; color:white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-right: 5px; }
 
-/* ================= SEARCH & STATS ================= */
-.toolbar-wrap { padding: 16px; flex-shrink: 0; }
-.search-container { display: flex; gap: 8px; background: var(--surface); padding: 6px; border-radius: var(--radius-md); box-shadow: var(--shadow-card); margin-bottom: 12px; border: 1px solid var(--border-color); }
-.search-filter { border: none; background: var(--bg-page); padding: 8px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; outline: none; }
-.search-input-wrap { flex: 1; display: flex; align-items: center; }
-.search-input-wrap input { width: 100%; border: none; background: transparent; padding: 8px; font-size: 14px; outline: none; }
+/* Views Container */
+.view-section { display: none; flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 80px; }
+.view-section.active { display: flex; flex-direction: column; }
 
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.stat-card { background: var(--surface); border-radius: var(--radius-sm); padding: 12px; text-align: center; border: 1px solid var(--border-color); }
-.stat-val { font-size: 20px; font-weight: 700; color: var(--primary); }
-.stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+/* Cards & Forms Shared */
+.card { background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border-color); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-card); }
+.card-header { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+.data-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+.data-table th, .data-table td { padding: 8px; border: 1px solid var(--border-color); text-align: right; }
+.data-table th { background: var(--primary-light); color: var(--primary); }
+.action-row { display: flex; gap: 8px; margin-top: 12px; }
+.btn { padding: 8px 12px; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; flex: 1; text-align: center; color: white; }
+.btn-blue { background: var(--color-edit); } .btn-red { background: var(--color-del); } .btn-green { background: var(--primary); }
+.btn-gray { background: var(--color-copy); }
 
-/* ================= LIST ================= */
-.list-wrap { flex: 1; overflow-y: auto; padding: 0 16px 80px; }
-.record-card { background: var(--surface); border-radius: var(--radius-md); margin-bottom: 12px; border: 1px solid var(--border-color); overflow: hidden; }
-.rec-body { padding: 14px; cursor: pointer; }
-.rec-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-.rec-name { font-size: 15px; font-weight: 700; }
-.rec-id { font-size: 11px; color: var(--primary); background: var(--primary-light); padding: 2px 6px; border-radius: 4px; }
-.rec-nid { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; display: block; }
-.rec-badges { display: flex; gap: 6px; }
-.badge { font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background: var(--bg-page); border: 1px solid var(--border-color); }
+/* Inputs */
+.input-group { margin-bottom: 12px; }
+.input-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: bold; }
+.input-control { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface); }
 
-.rec-actions { display: flex; padding: 8px; background: var(--bg-page); border-top: 1px solid var(--border-color); gap: 6px; }
-.action-btn { flex: 1; padding: 8px; border: none; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-.action-btn.edit { background: var(--bg-edit); color: var(--color-edit); }
-.action-btn.copy { background: var(--bg-copy); color: var(--color-copy); }
-.action-btn.del { background: var(--bg-del); color: var(--color-del); }
-
-.empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
-
-/* ================= FAB ================= */
-.fab { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 30px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 15px rgba(46,125,50,0.4); cursor: pointer; z-index: 100; }
-
-/* ================= MODALS ================= */
-.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: flex-end; justify-content: center; z-index: 2000; }
-.modal { background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; }
-.modal-header { display: flex; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-color); align-items: center; }
-.modal-title { font-size: 16px; font-weight: 700; }
-.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
-.modal-body { padding: 20px; }
-.field-group { margin-bottom: 16px; }
-.field-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; display: block; }
-.field-input { width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; background: var(--bg-page); outline: none; }
-.field-input:focus { border-color: var(--primary); }
-.area-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-.area-box { background: var(--bg-page); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px; text-align: center; }
-.area-box span { font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 4px; }
-.area-box input { width: 100%; border: none; background: var(--surface); text-align: center; font-size: 14px; padding: 4px; }
-.modal-footer { padding: 16px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; background: var(--surface); }
-.btn-primary { flex: 2; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); padding: 12px; font-weight: 700; cursor: pointer; }
-.btn-secondary { flex: 1; background: var(--bg-page); color: var(--text-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; font-weight: 600; cursor: pointer; }
+/* Modals */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+.modal { background: var(--surface); border-radius: var(--radius-md); width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; }
+.modal-header { padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+.modal-body { padding: 16px; }
+.modal-footer { padding: 16px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; }
 
 /* Toast */
 .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #323232; color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 13px; z-index: 9999; }
+.fab { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 30px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(46,125,50,0.4); cursor: pointer; z-index: 100; }
+
+/* Utility */
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.stats-box { background: var(--primary-light); border: 1px solid var(--primary); border-radius: var(--radius-sm); padding: 16px; text-align: center; margin-bottom: 16px; }
 </style>
 </head>
 <body>
@@ -120,398 +88,618 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 <div id="login-view">
   <div class="login-card">
     <img src="https://cdn-icons-png.flaticon.com/512/10543/10543163.png" alt="Logo" class="login-logo">
-    <div class="login-title">جمعية الناصريه الزراعيه</div>
-    
+    <div class="login-title">جمعية الناصرية الزراعية</div>
     <input type="text" id="login-user" class="login-input" placeholder="اسم المستخدم" autocomplete="off">
     <input type="password" id="login-pass" class="login-input" placeholder="كلمة المرور">
-    
     <button class="btn-login" onclick="attemptLogin()">تسجيل الدخول</button>
-    <div id="login-err" class="login-error">بيانات الدخول غير صحيحة!</div>
-    
-    <div style="margin-top:20px; font-size:11px; color:#aaa; text-align:right;">
-      للتجربة:<br>المدير: admin / admin123<br>الموظف: user / user123
-    </div>
+    <div id="login-err" class="login-error">البيانات غير صحيحة!</div>
   </div>
 </div>
 
 <div id="app-view">
-  
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h2>جمعية الناصريه</h2>
+      <h2>الناصرية الزراعية</h2>
       <p id="sidebar-role-text">بوابة النظام</p>
     </div>
-    <div class="sidebar-menu">
-      <a class="menu-item" onclick="toggleSidebar()">
-        <span class="menu-icon">🌾</span> قسم الحيازات (الحالي)
-      </a>
-      <a class="menu-item">
-        <span class="menu-icon">🌱</span> قسم التقاوي والمبيدات
-      </a>
-      <a class="menu-item">
-        <span class="menu-icon">🚜</span> قسم الأسمدة والكيماوي
-      </a>
-      <a class="menu-item admin-only">
-        <span class="menu-icon">💰</span> الخزينة والحسابات
-      </a>
-      <a class="menu-item admin-only">
-        <span class="menu-icon">👥</span> شئون العاملين
-      </a>
-      <a class="menu-item admin-only">
-        <span class="menu-icon">⚙️</span> إعدادات النظام
-      </a>
+    <div class="sidebar-menu" style="flex:1; overflow-y:auto; padding-top:10px;">
+      <a class="menu-item active" onclick="switchView('holdings')"><span class="menu-icon">🌾</span> قسم الحيازات</a>
+      <a class="menu-item" onclick="switchView('inventory', 'أسمدة')"><span class="menu-icon">🚜</span> قسم الأسمدة</a>
+      <a class="menu-item" onclick="switchView('inventory', 'مبيدات')"><span class="menu-icon">🧪</span> قسم المبيدات</a>
+      <a class="menu-item" onclick="switchView('inventory', 'مغذيات')"><span class="menu-icon">🌱</span> قسم المغذيات</a>
+      <a class="menu-item admin-only" onclick="switchView('treasury')"><span class="menu-icon">💰</span> الخزينة والحسابات</a>
+      <a class="menu-item admin-only" onclick="switchView('hr')"><span class="menu-icon">👥</span> شئون العاملين</a>
+      <a class="menu-item admin-only" onclick="switchView('settings')"><span class="menu-icon">⚙️</span> إعدادات النظام (المستخدمين)</a>
     </div>
     <button class="btn-logout" onclick="logout()">🚪 تسجيل الخروج</button>
   </div>
 
   <div class="header">
-    <div class="header-right">
+    <div style="display:flex; align-items:center;">
       <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-      <div class="header-titles">
-        <h1>جمعية الناصريه الزراعيه</h1>
-        <p id="header-sub">جاري المزامنة...</p>
+      <div style="margin-right:10px;">
+        <h1 style="font-size:16px; margin:0;" id="app-title">قسم الحيازات</h1>
       </div>
     </div>
-    <div class="header-btns">
-      <button class="btn-icon" onclick="openPrintDialog()" title="طباعة">🖨️</button>
-    </div>
+    <div style="display:flex;" id="header-actions">
+      </div>
   </div>
-  
-  <div class="toolbar-wrap">
-    <div class="search-container">
-      <select id="search-type" class="search-filter" onchange="renderList()">
-        <option value="all">الكل</option>
-        <option value="id">رقم الحيازة</option>
-        <option value="nid">الرقم القومي</option>
-        <option value="name">الاسم</option>
-      </select>
-      <div class="search-input-wrap">
-        <input type="search" id="search-input" placeholder="ابحث هنا..." oninput="renderList()" />
-      </div>
+
+  <div id="view-holdings" class="view-section active">
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <input type="search" id="h-search" class="input-control" placeholder="بحث برقم الحيازة أو الاسم..." oninput="renderHoldings()">
     </div>
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-val" id="stat-count">0</div>
-        <div class="stat-label">إجمالي الحيازات</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" id="stat-area">0.00</div>
-        <div class="stat-label">المساحة (فدان)</div>
-      </div>
+    <div class="stats-box flex-between" style="padding:10px;">
+      <div><div style="font-size:20px;font-weight:bold;color:var(--primary)" id="h-count">0</div><div style="font-size:11px">إجمالي الحيازات</div></div>
+      <div><div style="font-size:20px;font-weight:bold;color:var(--primary)" id="h-area">0</div><div style="font-size:11px">فدان مسجل</div></div>
     </div>
+    <div id="holdings-list"></div>
+    <button class="fab" onclick="openHoldingModal()">➕ إضافة حيازة</button>
   </div>
-  
-  <div class="list-wrap" id="list-wrap"></div>
-  <button class="fab" onclick="openAdd()">➕ إضافة حيازة</button>
+
+  <div id="view-inventory" class="view-section">
+    <div class="stats-box">
+      <h3 id="inv-title" style="margin-bottom:10px;">المخزن</h3>
+      <div class="flex-between">
+        <div><b id="inv-total-items">0</b><br><small>عدد الأصناف</small></div>
+        <div><b id="inv-total-value">0</b> ج<br><small>قيمة البضاعة (شراء)</small></div>
+      </div>
+    </div>
+    <div id="inventory-list"></div>
+    <button class="fab admin-only" onclick="openInventoryModal()">➕ إضافة صنف جديد</button>
+  </div>
+
+  <div id="view-treasury" class="view-section">
+    <div class="stats-box" style="background:#FFF3E0; border-color:#FF9800;">
+      <h2 style="color:#E65100; margin-bottom:5px;">النقدية بالخزينة</h2>
+      <div style="font-size:28px; font-weight:bold; color:#E65100;" id="treasury-total">0 ج.م</div>
+    </div>
+    <h3 style="margin-bottom:10px;">ملخص حسابات الأقسام:</h3>
+    <div id="treasury-summary"></div>
+  </div>
+
+  <div id="view-hr" class="view-section">
+    <div style="display:flex; gap:10px; margin-bottom:15px;">
+      <button class="btn btn-green" onclick="renderHr('employee')">العاملين</button>
+      <button class="btn btn-blue" onclick="renderHr('board')">مجلس الإدارة</button>
+    </div>
+    <div id="hr-list"></div>
+    <button class="fab" onclick="openHrModal()">➕ إضافة عضو/موظف</button>
+  </div>
+
+  <div id="view-settings" class="view-section">
+    <h3 style="margin-bottom:15px;">إدارة مستخدمي النظام</h3>
+    <div id="users-list"></div>
+    <button class="fab" onclick="openUserModal()">➕ مستخدم جديد</button>
+  </div>
+
 </div>
 
 <div id="modal-root"></div>
+<input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)" style="display:none" />
 
 <script>
-// ================= AUTHENTICATION & ROLES =================
-let currentUserRole = null; // 'admin' or 'user'
+// ================= DATABASES (Local Storage & Cloud) =================
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4H9xj3Ck71vcuGW9g7J1mmVxwhV6V37nfSolb-KaRGGgeNGBfNsv90DgVae2lW9yQog/exec';
 
+let dbHoldings = []; // Cloud
+let dbInventory = JSON.parse(localStorage.getItem('app_inventory')) || [];
+let dbHr = JSON.parse(localStorage.getItem('app_hr')) || [];
+let dbUsers = JSON.parse(localStorage.getItem('app_users')) || [
+  { id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' },
+  { id: 2, user: 'user', pass: 'user123', role: 'user', name: 'موظف الإدخال' }
+];
+
+let currentUser = null;
+let currentInvCategory = '';
+let currentHrTab = 'employee';
+let editId = null; // General purpose ID for edits
+
+// Save Local DBs
+function saveLocal() {
+  localStorage.setItem('app_inventory', JSON.stringify(dbInventory));
+  localStorage.setItem('app_hr', JSON.stringify(dbHr));
+  localStorage.setItem('app_users', JSON.stringify(dbUsers));
+}
+
+// ================= AUTH & SESSION =================
 function attemptLogin() {
-  const user = document.getElementById('login-user').value.trim();
-  const pass = document.getElementById('login-pass').value.trim();
-  const err = document.getElementById('login-err');
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value.trim();
+  const found = dbUsers.find(x => x.user === u && x.pass === p);
   
-  if (user === 'admin' && pass === 'admin123') {
-    currentUserRole = 'admin';
-    completeLogin();
-  } else if (user === 'user' && pass === 'user123') {
-    currentUserRole = 'user';
-    completeLogin();
+  if(found) {
+    currentUser = found;
+    localStorage.setItem('session_user', JSON.stringify(found));
+    localStorage.setItem('session_expire', Date.now() + (30 * 60 * 1000)); // 30 mins
+    initApp();
   } else {
-    err.style.display = 'block';
+    document.getElementById('login-err').style.display = 'block';
   }
 }
 
-function completeLogin() {
-  document.getElementById('login-view').style.display = 'none';
-  document.getElementById('app-view').style.display = 'flex';
-  document.getElementById('sidebar-role-text').textContent = currentUserRole === 'admin' ? 'صلاحيات: مدير النظام' : 'صلاحيات: موظف';
-  
-  // إخفاء/إظهار القوائم الإدارية في الـ Sidebar
-  const adminItems = document.querySelectorAll('.admin-only');
-  adminItems.forEach(item => {
-    item.style.display = currentUserRole === 'admin' ? 'flex' : 'none';
-  });
-
-  loadData();
+function checkSession() {
+  const expire = localStorage.getItem('session_expire');
+  const user = localStorage.getItem('session_user');
+  if(user && expire && Date.now() < parseInt(expire)) {
+    currentUser = JSON.parse(user);
+    localStorage.setItem('session_expire', Date.now() + (30 * 60 * 1000)); // Renew
+    initApp();
+  }
 }
 
 function logout() {
-  currentUserRole = null;
-  toggleSidebar();
-  document.getElementById('app-view').style.display = 'none';
-  document.getElementById('login-view').style.display = 'flex';
-  document.getElementById('login-user').value = '';
-  document.getElementById('login-pass').value = '';
-  document.getElementById('login-err').style.display = 'none';
+  localStorage.removeItem('session_user');
+  localStorage.removeItem('session_expire');
+  location.reload();
 }
 
-// ================= SIDEBAR LOGIC =================
+function initApp() {
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('app-view').style.display = 'flex';
+  document.getElementById('sidebar-role-text').textContent = currentUser.name + (currentUser.role === 'admin' ? ' (مدير)' : ' (موظف)');
+  
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = currentUser.role === 'admin' ? '' : 'none'; // '' reverts to default CSS
+  });
+  
+  loadHoldingsFromCloud();
+  switchView('holdings');
+}
+
+// ================= UI ROUTING =================
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('sidebar-overlay').classList.toggle('active');
 }
 
-// ================= CORE APP LOGIC =================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4H9xj3Ck71vcuGW9g7J1mmVxwhV6V37nfSolb-KaRGGgeNGBfNsv90DgVae2lW9yQog/exec';
-let db = [];
-let editId = null;
-
-async function loadData() {
-  try {
-    const response = await fetch(SCRIPT_URL);
-    const data = await response.json();
-    db = data.map(r => ({ ...r, id: String(r.id).replace(/^0+/, '') || '0', nationalId: r.nationalId || '' }));
-    renderList();
-  } catch(error) {
-    document.getElementById('header-sub').textContent = '⚠️ يعمل أوفلاين/بدون اتصال';
+function switchView(viewName, param = '') {
+  document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+  
+  // Highlight menu
+  if(param) {
+    document.querySelector(`.menu-item[onclick*="${param}"]`)?.classList.add('active');
+  } else {
+    document.querySelector(`.menu-item[onclick*="${viewName}"]`)?.classList.add('active');
   }
+
+  const titleEl = document.getElementById('app-title');
+  const actionsEl = document.getElementById('header-actions');
+  
+  if(viewName === 'holdings') {
+    document.getElementById('view-holdings').classList.add('active');
+    titleEl.textContent = 'قسم الحيازات';
+    actionsEl.innerHTML = `
+      <button class="btn-icon" onclick="printHoldings()" title="طباعة">🖨️</button>
+      <button class="btn-icon" onclick="openExcelModal()" title="إكسيل">📊</button>
+    `;
+    renderHoldings();
+  } 
+  else if(viewName === 'inventory') {
+    document.getElementById('view-inventory').classList.add('active');
+    currentInvCategory = param;
+    titleEl.textContent = `قسم ${param}`;
+    document.getElementById('inv-title').textContent = `جرد ${param}`;
+    actionsEl.innerHTML = `<button class="btn-icon" onclick="printInventory()" title="طباعة الجرد">🖨️</button>`;
+    renderInventory();
+  }
+  else if(viewName === 'treasury') {
+    document.getElementById('view-treasury').classList.add('active');
+    titleEl.textContent = 'الخزينة والحسابات';
+    actionsEl.innerHTML = `<button class="btn-icon" onclick="window.print()" title="طباعة التقرير">🖨️</button>`;
+    renderTreasury();
+  }
+  else if(viewName === 'hr') {
+    document.getElementById('view-hr').classList.add('active');
+    titleEl.textContent = 'شئون العاملين';
+    actionsEl.innerHTML = '';
+    renderHr(currentHrTab);
+  }
+  else if(viewName === 'settings') {
+    document.getElementById('view-settings').classList.add('active');
+    titleEl.textContent = 'إعدادات النظام';
+    actionsEl.innerHTML = '';
+    renderUsers();
+  }
+  
+  if(document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
 }
 
+// ================= UTILS =================
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2500);
+}
+function closeModal() { document.getElementById('modal-root').innerHTML = ''; editId = null; }
 function areaToFeddan(f,q,s){ return (parseFloat(f)||0)+(parseFloat(q)||0)/24+(parseFloat(s)||0)/576; }
-function fmtArea(f,q,s){ return `${f||0} فدان, ${q||0} قيراط, ${s||0} سهم`; }
 
-function toast(msg){ 
-  const t=document.createElement('div'); t.className='toast'; t.textContent=msg; 
-  document.body.appendChild(t); setTimeout(()=>t.remove(), 2500); 
+// ================= 1. HOLDINGS MODULE (CLOUD) =================
+async function loadHoldingsFromCloud() {
+  try {
+    const res = await fetch(SCRIPT_URL);
+    const data = await res.json();
+    dbHoldings = data.map(r => ({ ...r, id: String(r.id).replace(/^0+/, '') || '0' }));
+    if(document.getElementById('view-holdings').classList.contains('active')) renderHoldings();
+  } catch(e) { toast('يعمل في وضع عدم الاتصال'); }
 }
 
-function getFiltered(){
-  const q = document.getElementById('search-input').value.trim().toLowerCase();
-  const type = document.getElementById('search-type').value;
-  let list = db.slice();
-  if(q) {
-    list = list.filter(r => {
-      if(type === 'name') return (r.name||'').toLowerCase().includes(q);
-      if(type === 'id') return String(r.id).includes(q);
-      if(type === 'nid') return String(r.nationalId||'').includes(q);
-      return (r.name||'').toLowerCase().includes(q) || String(r.id).includes(q) || String(r.nationalId||'').includes(q);
-    });
-  }
-  return list;
-}
-
-function renderList(){
-  const wrap = document.getElementById('list-wrap');
-  const list = getFiltered();
+function renderHoldings() {
+  const q = document.getElementById('h-search').value.toLowerCase();
+  let list = dbHoldings.filter(r => String(r.id).includes(q) || (r.name||'').toLowerCase().includes(q));
   
-  document.getElementById('stat-count').textContent = db.length;
-  document.getElementById('stat-area').textContent = db.reduce((a,r)=> a + areaToFeddan(r.feddan, r.qirat, r.sahm), 0).toFixed(2);
-  document.getElementById('header-sub').textContent = 'النظام يعمل';
-
-  if(!list.length){ wrap.innerHTML=`<div class="empty-state">لا توجد بيانات</div>`; return; }
+  document.getElementById('h-count').textContent = dbHoldings.length;
+  document.getElementById('h-area').textContent = dbHoldings.reduce((a,r) => a + areaToFeddan(r.feddan, r.qirat, r.sahm), 0).toFixed(2);
   
+  const wrap = document.getElementById('holdings-list');
   wrap.innerHTML = list.map(r => `
-    <div class="record-card">
-      <div class="rec-body" onclick="openDetail('${r.id}')">
-        <div class="rec-header">
-          <span class="rec-name">${r.name}</span>
-          <span class="rec-id">#${r.id}</span>
-        </div>
-        ${r.nationalId ? `<span class="rec-nid">الرقم القومي: ${r.nationalId}</span>` : ''}
-        <div class="rec-badges">
-          <span class="badge">📏 ${fmtArea(r.feddan,r.qirat,r.sahm)}</span>
-          <span class="badge">📍 ${r.basin||'—'}</span>
-        </div>
+    <div class="card">
+      <div class="card-header">
+        <b style="font-size:16px;">${r.name}</b>
+        <span style="background:var(--primary-light); color:var(--primary); padding:2px 8px; border-radius:10px; font-weight:bold;">رقم: ${r.id}</span>
       </div>
-      <div class="rec-actions">
-        <button class="action-btn edit" onclick="openEdit('${r.id}')">تعديل</button>
-        ${currentUserRole === 'admin' ? `<button class="action-btn del" onclick="confirmDelete('${r.id}')">حذف</button>` : ''}
+      <div style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">الرقم القومي: ${r.nationalId||'---'}</div>
+      <div style="display:flex; gap:10px; font-size:12px; font-weight:bold;">
+        <span style="border:1px solid #ccc; padding:4px; border-radius:4px;">المساحة: ${r.feddan||0}ف, ${r.qirat||0}ق, ${r.sahm||0}س</span>
+        <span style="border:1px solid #ccc; padding:4px; border-radius:4px;">الحوض: ${r.basin||'-'}</span>
       </div>
-    </div>`).join('');
+      <div class="action-row">
+        <button class="btn btn-blue" onclick="openHoldingModal('${r.id}')">تعديل</button>
+        <button class="btn btn-gray" onclick="copyHolding('${r.id}')">نسخ 📋</button>
+        ${currentUser.role === 'admin' ? `<button class="btn btn-red" onclick="delHolding('${r.id}')">حذف</button>` : ''}
+      </div>
+    </div>
+  `).join('');
 }
 
-// ================= MODALS (ADD/EDIT/DETAIL) =================
-function showFormModal(rec){
-  const isEdit = !!rec;
-  const nextId = String(db.reduce((a,r)=>Math.max(a, parseInt(r.id)||0), 0) + 1);
+function copyHolding(id) {
+  const r = dbHoldings.find(x => String(x.id) === id);
+  const txt = `رقم الحيازة: ${r.id}\nالاسم: ${r.name}\nالمساحة: ${r.feddan||0}ف, ${r.qirat||0}ق, ${r.sahm||0}س`;
+  navigator.clipboard.writeText(txt).then(() => toast('تم النسخ بنجاح!'));
+}
 
-  document.getElementById('modal-root').innerHTML=`
-    <div class="modal-backdrop" onclick="bgClose(event)">
+function openHoldingModal(id = null) {
+  editId = id;
+  const r = id ? dbHoldings.find(x => String(x.id) === id) : {};
+  const nextId = dbHoldings.reduce((max, cur) => Math.max(max, parseInt(cur.id)||0), 0) + 1;
+  
+  document.getElementById('modal-root').innerHTML = `
+    <div class="modal-backdrop" onclick="closeModal()">
       <div class="modal" onclick="event.stopPropagation()">
         <div class="modal-header">
-          <span class="modal-title">${isEdit?'تعديل':'إضافة'} حيازة</span>
-          <button class="modal-close" onclick="closeModal()">✕</button>
+          <span>${id ? 'تعديل حيازة' : 'إضافة حيازة جديدة'}</span>
+          <span style="cursor:pointer" onclick="closeModal()">✕</span>
         </div>
         <div class="modal-body">
-          <div class="field-group">
-            <label class="field-label">رقم الحيازة</label>
-            <input class="field-input" id="f-id" type="text" value="${isEdit?rec.id:nextId}" ${isEdit?'readonly':''} />
-          </div>
-          <div class="field-group">
-            <label class="field-label">اسم الحائز *</label>
-            <input class="field-input" id="f-name" type="text" value="${isEdit?rec.name:''}" />
-          </div>
-          <div class="field-group">
-            <label class="field-label">الرقم القومي (اختياري)</label>
-            <input class="field-input" id="f-nid" type="tel" maxlength="14" value="${isEdit?(rec.nationalId||''):''}" placeholder="14 رقم" />
-          </div>
-          <div class="field-group">
-            <label class="field-label">اسم الحوض</label>
-            <input class="field-input" id="f-basin" type="text" value="${isEdit?rec.basin:''}" />
-          </div>
-          <div class="field-group">
-            <label class="field-label">المساحة</label>
-            <div class="area-grid">
-              <div class="area-box"><span>فدان</span><input id="f-fed" type="number" min="0" value="${isEdit?rec.feddan:0}" /></div>
-              <div class="area-box"><span>قيراط</span><input id="f-qir" type="number" min="0" max="23" value="${isEdit?rec.qirat:0}" /></div>
-              <div class="area-box"><span>سهم</span><input id="f-sahm" type="number" min="0" max="23" value="${isEdit?rec.sahm:0}" /></div>
-            </div>
+          <div class="input-group"><label>رقم الحيازة</label><input type="text" id="fh-id" class="input-control" value="${id ? r.id : nextId}" ${id?'readonly':''}></div>
+          <div class="input-group"><label>اسم الحائز</label><input type="text" id="fh-name" class="input-control" value="${r.name||''}"></div>
+          <div class="input-group"><label>الرقم القومي</label><input type="text" id="fh-nid" class="input-control" value="${r.nationalId||''}"></div>
+          <div class="input-group"><label>اسم الحوض</label><input type="text" id="fh-basin" class="input-control" value="${r.basin||''}"></div>
+          <div style="display:flex; gap:10px;">
+            <div class="input-group" style="flex:1"><label>فدان</label><input type="number" id="fh-f" class="input-control" value="${r.feddan||0}"></div>
+            <div class="input-group" style="flex:1"><label>قيراط</label><input type="number" id="fh-q" class="input-control" value="${r.qirat||0}"></div>
+            <div class="input-group" style="flex:1"><label>سهم</label><input type="number" id="fh-s" class="input-control" value="${r.sahm||0}"></div>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-secondary" onclick="closeModal()">إلغاء</button>
-          <button class="btn-primary" onclick="saveRecord()">حفظ البيانات</button>
+          <button class="btn btn-green" onclick="saveHolding()">حفظ البيانات السحابية</button>
         </div>
       </div>
     </div>`;
 }
 
-async function saveRecord(){
-  const id = String(document.getElementById('f-id').value).trim();
-  const name = document.getElementById('f-name').value.trim();
-  const nid = document.getElementById('f-nid').value.trim();
-  const basin = document.getElementById('f-basin').value.trim();
-  const feddan = document.getElementById('f-fed').value||'0';
-  const qirat = document.getElementById('f-qir').value||'0';
-  const sahm = document.getElementById('f-sahm').value||'0';
+async function saveHolding() {
+  const rec = {
+    id: document.getElementById('fh-id').value.trim(),
+    name: document.getElementById('fh-name').value.trim(),
+    nationalId: document.getElementById('fh-nid').value.trim(),
+    basin: document.getElementById('fh-basin').value.trim(),
+    feddan: document.getElementById('fh-f').value||0,
+    qirat: document.getElementById('fh-q').value||0,
+    sahm: document.getElementById('fh-s').value||0,
+    created: new Date().toISOString()
+  };
   
-  if(!name){ toast('⚠️ اكتب الاسم'); return; }
+  if(!rec.name) return toast('الاسم مطلوب!');
   
-  const record = { id, name, nationalId: nid, basin, feddan, qirat, sahm, created: new Date().toISOString() };
-
-  if(!editId){
-    if(db.find(r => String(r.id) === id)){ toast('⚠️ الرقم موجود مسبقاً'); return; }
-    db.push(record);
+  if(!editId) {
+    if(dbHoldings.find(x => String(x.id) === rec.id)) return toast('الرقم موجود مسبقاً');
+    dbHoldings.push(rec);
   } else {
-    const idx = db.findIndex(r => String(r.id) === String(editId));
-    if(idx !== -1) { record.created = db[idx].created; db[idx] = record; }
+    const idx = dbHoldings.findIndex(x => String(x.id) === String(editId));
+    dbHoldings[idx] = rec;
   }
   
-  closeModal(); renderList(); toast('جاري الحفظ...');
-  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', record }) }); toast('✓ تم الحفظ'); } catch(e){}
+  closeModal(); renderHoldings(); toast('جاري الحفظ...');
+  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', record: rec }) }); toast('✓ تم الحفظ'); } catch(e){}
 }
 
-function openAdd(){ editId = null; showFormModal(null); }
-function openEdit(id){ const rec = db.find(r => String(r.id) === String(id)); if(rec){ editId=id; showFormModal(rec); } }
-
-function openDetail(id){
-  const rec = db.find(r => String(r.id) === String(id)); if(!rec) return;
-  document.getElementById('modal-root').innerHTML=`
-    <div class="modal-backdrop" onclick="bgClose(event)">
-      <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <span class="modal-title">رقم الحيازة: ${rec.id}</span>
-          <button class="modal-close" onclick="closeModal()">✕</button>
-        </div>
-        <div class="modal-body" style="line-height:1.8">
-          <h2 style="color:var(--primary); margin-bottom:10px">${rec.name}</h2>
-          ${rec.nationalId ? `<div style="color:var(--text-muted); font-size:13px; margin-bottom:15px;">الرقم القومي: <b>${rec.nationalId}</b></div>` : ''}
-          <div style="background:var(--bg-page); padding:12px; border-radius:8px;">
-            <div><b>الحوض:</b> ${rec.basin}</div>
-            <div><b>المساحة:</b> ${fmtArea(rec.feddan, rec.qirat, rec.sahm)}</div>
-            <div><b>الإجمالي (فدان):</b> ${areaToFeddan(rec.feddan, rec.qirat, rec.sahm).toFixed(2)}</div>
-          </div>
-        </div>
-      </div>
-    </div>`;
-}
-
-function confirmDelete(id){
-  const rec = db.find(r => String(r.id) === String(id));
-  document.getElementById('modal-root').innerHTML=`
-    <div class="modal-backdrop">
-      <div class="modal" style="text-align:center; padding:20px;">
-        <h3 style="color:var(--color-del); margin-bottom:15px">تأكيد الحذف</h3>
-        <p>حذف حيازة ${rec.name}؟</p>
-        <div style="display:flex; gap:10px; margin-top:20px;">
-          <button class="btn-secondary" style="flex:1" onclick="closeModal()">إلغاء</button>
-          <button class="btn-primary" style="flex:1; background:var(--color-del)" onclick="deleteRecord('${id}')">حذف</button>
-        </div>
-      </div>
-    </div>`;
-}
-
-async function deleteRecord(id){ 
-  db = db.filter(r => String(r.id) !== String(id)); closeModal(); renderList(); toast('جاري الحذف...');
+async function delHolding(id) {
+  if(!confirm('هل أنت متأكد من الحذف النهائي؟')) return;
+  dbHoldings = dbHoldings.filter(x => String(x.id) !== String(id));
+  renderHoldings(); toast('جاري الحذف...');
   try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', id: String(id) }) }); } catch(e){}
 }
 
-function closeModal(){ document.getElementById('modal-root').innerHTML=''; editId=null; }
-function bgClose(e){ if(e.target.classList.contains('modal-backdrop')) closeModal(); }
-
-// ================= SMART PRINT LOGIC =================
-function openPrintDialog(){
-  if(!db.length){ toast('⚠️ لا يوجد بيانات'); return; }
-  document.getElementById('modal-root').innerHTML=`
-    <div class="modal-backdrop" onclick="bgClose(event)">
+// مركز البيانات (Excel)
+function openExcelModal() {
+  document.getElementById('modal-root').innerHTML = `
+    <div class="modal-backdrop" onclick="closeModal()">
       <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <span class="modal-title">خيارات الطباعة</span>
-          <button class="modal-close" onclick="closeModal()">✕</button>
-        </div>
+        <div class="modal-header"><span>مركز البيانات (إكسيل)</span><span style="cursor:pointer" onclick="closeModal()">✕</span></div>
         <div class="modal-body" style="text-align:center;">
-          <p style="margin-bottom:20px; color:var(--text-main);">هل تريد إظهار "الرقم القومي" في كشف الطباعة؟</p>
-          <div style="display:flex; gap:10px;">
-            <button class="btn-primary" onclick="executePrint(true)">نعم، إظهار الرقم القومي</button>
-            <button class="btn-secondary" onclick="executePrint(false)">لا، طباعة عادية</button>
-          </div>
+          <button class="btn btn-blue" style="width:100%; margin-bottom:10px; padding:15px;" onclick="document.getElementById('file-input').click()">📥 استيراد من ملف إكسيل</button>
+          <button class="btn btn-green" style="width:100%; margin-bottom:10px; padding:15px;" onclick="exportAllHoldings()">📤 تصدير كل الحيازات</button>
+          <button class="btn btn-gray" style="width:100%; padding:15px;" onclick="downloadTemplate()">📄 تحميل نموذج فارغ</button>
         </div>
       </div>
     </div>`;
 }
 
-function executePrint(includeNid){
-  closeModal();
-  const list = getFiltered();
-  const win = window.open('', '', 'width=1000,height=700');
+function downloadTemplate() {
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([['رقم الحيازة','اسم الحائز','الرقم القومي','اسم الحوض','فدان','قيراط','سهم'], ['1','محمد أحمد','12345678901234','حوض أ',1,0,0]]);
+  XLSX.utils.book_append_sheet(wb, ws, 'الحيازات');
+  XLSX.writeFile(wb, 'نموذج_الحيازات.xlsx');
+}
+
+function exportAllHoldings() {
+  if(!dbHoldings.length) return toast('لا توجد بيانات');
+  const wb = XLSX.utils.book_new();
+  const rows = dbHoldings.map(r => [r.id, r.name, r.nationalId||'', r.basin||'', r.feddan||0, r.qirat||0, r.sahm||0]);
+  const ws = XLSX.utils.aoa_to_sheet([['رقم الحيازة','اسم الحائز','الرقم القومي','اسم الحوض','فدان','قيراط','سهم'], ...rows]);
+  XLSX.utils.book_append_sheet(wb, ws, 'الحيازات');
+  XLSX.writeFile(wb, `حيازات_${new Date().getTime()}.xlsx`);
+}
+
+function handleFileSelect(e) {
+  const f = e.target.files[0]; if(!f) return; e.target.value='';
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+    toast(`تم قراءة ${rows.length-1} صف، سيتم رفعهم للسحابة (الرجاء الانتظار لاحقاً لتطوير الرفع الجماعي)`);
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+function printHoldings() {
+  const win = window.open('', '', 'width=900,height=700');
+  let html = `<html dir="rtl"><head><style>body{font-family:Arial;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #000;padding:5px;text-align:center;}</style></head><body><h2>سجل الحيازات</h2><table><tr><th>رقم</th><th>الاسم</th><th>الرقم القومي</th><th>فدان</th><th>قيراط</th><th>سهم</th></tr>`;
+  dbHoldings.forEach(r => html += `<tr><td>${r.id}</td><td>${r.name}</td><td>${r.nationalId||'-'}</td><td>${r.feddan||0}</td><td>${r.qirat||0}</td><td>${r.sahm||0}</td></tr>`);
+  win.document.write(html + `</table></body></html>`); win.document.close(); setTimeout(()=>win.print(), 300);
+}
+
+// ================= 2. INVENTORY MODULE (LOCAL) =================
+function renderInventory() {
+  const list = dbInventory.filter(x => x.category === currentInvCategory);
+  let totalVal = 0;
   
-  let html = `<html dir="rtl"><head><title>طباعة حيازات - جمعية الناصريه</title><style>
-    body{font-family:Arial, sans-serif; margin:20px;} 
-    h1{text-align:center; color:#2E7D32; margin-bottom:5px;}
-    h3{text-align:center; color:#555; margin-top:0; margin-bottom:20px;}
-    table{width:100%; border-collapse:collapse; margin-bottom:30px;} 
-    th{background:#2E7D32; color:#fff; padding:10px; border:1px solid #aaa;} 
-    td{padding:8px; border:1px solid #aaa; text-align:center;}
-    tr:nth-child(even){background:#f9f9f9;}
-  </style></head><body>
-  <h1>جمعية الناصريه الزراعيه</h1>
-  <h3>كشف سجل الحيازات</h3>
-  <table>
-    <tr>
-      <th>م</th>
-      <th>رقم</th>
-      <th>الاسم</th>
-      ${includeNid ? '<th>الرقم القومي</th>' : ''}
-      <th>الحوض</th>
-      <th>سهم</th>
-      <th>قيراط</th>
-      <th>فدان</th>
-    </tr>`;
+  const html = list.map(r => {
+    const remaining = (parseFloat(r.start)||0) + (parseFloat(r.in)||0) - (parseFloat(r.cashOut)||0) - (parseFloat(r.creditOut)||0);
+    totalVal += remaining * (parseFloat(r.price)||0);
+    return `
+    <div class="card">
+      <div class="card-header"><b style="font-size:16px;">${r.name}</b></div>
+      <table class="data-table">
+        <tr><th>رصيد أول</th><th>وارد</th><th>مباع نقدي</th><th>مباع آجل</th><th>المتبقي</th></tr>
+        <tr><td>${r.start}</td><td>${r.in}</td><td>${r.cashOut}</td><td>${r.creditOut}</td><td style="font-weight:bold; color:var(--primary);">${remaining}</td></tr>
+      </table>
+      <div style="font-size:12px; margin-top:8px; color:var(--text-muted)">سعر الشراء: ${r.price} ج.م</div>
+      ${currentUser.role === 'admin' ? `
+      <div class="action-row">
+        <button class="btn btn-blue" onclick="openInventoryModal(${r.id})">تعديل الحركة</button>
+        <button class="btn btn-red" onclick="delInventory(${r.id})">حذف الصنف</button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+  
+  document.getElementById('inv-total-items').textContent = list.length;
+  document.getElementById('inv-total-value').textContent = totalVal.toFixed(2);
+  document.getElementById('inventory-list').innerHTML = html || '<div class="empty-state">المخزن فارغ</div>';
+}
+
+function openInventoryModal(id = null) {
+  editId = id;
+  const r = id ? dbInventory.find(x => x.id === id) : {};
+  document.getElementById('modal-root').innerHTML = `
+    <div class="modal-backdrop" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header"><span>${id ? 'تعديل صنف' : 'إضافة صنف'} (${currentInvCategory})</span><span style="cursor:pointer" onclick="closeModal()">✕</span></div>
+        <div class="modal-body">
+          <div class="input-group"><label>اسم الصنف</label><input type="text" id="fi-name" class="input-control" value="${r.name||''}"></div>
+          <div style="display:flex; gap:10px;">
+            <div class="input-group" style="flex:1"><label>رصيد أول المدة</label><input type="number" id="fi-start" class="input-control" value="${r.start||0}"></div>
+            <div class="input-group" style="flex:1"><label>الكمية الواردة</label><input type="number" id="fi-in" class="input-control" value="${r.in||0}"></div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <div class="input-group" style="flex:1"><label>مباع نقدي</label><input type="number" id="fi-cash" class="input-control" value="${r.cashOut||0}"></div>
+            <div class="input-group" style="flex:1"><label>مباع آجل</label><input type="number" id="fi-credit" class="input-control" value="${r.creditOut||0}"></div>
+          </div>
+          <div class="input-group"><label>سعر الشراء للوحدة (ج.م)</label><input type="number" id="fi-price" class="input-control" value="${r.price||0}"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-green" onclick="saveInventory()">حفظ التعديلات (محلياً)</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function saveInventory() {
+  const rec = {
+    id: editId || Date.now(),
+    category: currentInvCategory,
+    name: document.getElementById('fi-name').value.trim(),
+    start: document.getElementById('fi-start').value||0,
+    in: document.getElementById('fi-in').value||0,
+    cashOut: document.getElementById('fi-cash').value||0,
+    creditOut: document.getElementById('fi-credit').value||0,
+    price: document.getElementById('fi-price').value||0,
+  };
+  if(!rec.name) return toast('الاسم مطلوب');
+  
+  if(editId) { const idx = dbInventory.findIndex(x => x.id === editId); dbInventory[idx] = rec; }
+  else { dbInventory.push(rec); }
+  
+  saveLocal(); closeModal(); renderInventory(); toast('تم الحفظ');
+}
+function delInventory(id) {
+  if(!confirm('حذف؟')) return;
+  dbInventory = dbInventory.filter(x => x.id !== id);
+  saveLocal(); renderInventory();
+}
+
+function printInventory() {
+  const list = dbInventory.filter(x => x.category === currentInvCategory);
+  const win = window.open('', '', 'width=900,height=700');
+  let html = `<html dir="rtl"><head><style>body{font-family:Arial;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #000;padding:5px;text-align:center;}</style></head><body><h2>جرد ${currentInvCategory}</h2><table><tr><th>الصنف</th><th>أول المدة</th><th>وارد</th><th>مباع نقدي</th><th>مباع آجل</th><th>المتبقي</th><th>سعر الشراء</th></tr>`;
+  list.forEach(r => {
+    const rem = (parseFloat(r.start)||0) + (parseFloat(r.in)||0) - (parseFloat(r.cashOut)||0) - (parseFloat(r.creditOut)||0);
+    html += `<tr><td>${r.name}</td><td>${r.start}</td><td>${r.in}</td><td>${r.cashOut}</td><td>${r.creditOut}</td><th>${rem}</th><td>${r.price}</td></tr>`;
+  });
+  win.document.write(html + `</table></body></html>`); win.document.close(); setTimeout(()=>win.print(), 300);
+}
+
+// ================= 3. TREASURY MODULE =================
+function renderTreasury() {
+  let totalCashSalesValue = 0;
+  let summaryHtml = '';
+  
+  ['أسمدة', 'مبيدات', 'مغذيات'].forEach(cat => {
+    const items = dbInventory.filter(x => x.category === cat);
+    let catCash = 0;
+    items.forEach(i => catCash += (parseFloat(i.cashOut)||0) * (parseFloat(i.price)||0)); // Assuming selling at cost for demo, or you can add "selling price"
     
-  list.forEach((r, i) => {
-    html += `<tr>
-      <td>${i+1}</td>
-      <td>${r.id}</td>
-      <td>${r.name}</td>
-      ${includeNid ? `<td>${r.nationalId || '-'}</td>` : ''}
-      <td>${r.basin}</td>
-      <td>${r.sahm||0}</td>
-      <td>${r.qirat||0}</td>
-      <td>${r.feddan||0}</td>
-    </tr>`;
+    totalCashSalesValue += catCash;
+    summaryHtml += `
+      <div style="background:var(--surface); border:1px solid var(--border-color); padding:10px; margin-bottom:10px; border-radius:8px;">
+        <div class="flex-between"><b>مبيعات ${cat} (نقدية)</b> <span style="color:var(--primary); font-weight:bold;">${catCash.toFixed(2)} ج</span></div>
+      </div>
+    `;
   });
   
-  win.document.write(html + `</table></body></html>`);
-  win.document.close(); 
-  setTimeout(()=>win.print(), 400);
+  document.getElementById('treasury-total').textContent = totalCashSalesValue.toFixed(2) + ' ج.م';
+  document.getElementById('treasury-summary').innerHTML = summaryHtml;
 }
+
+// ================= 4. HR MODULE (LOCAL) =================
+function renderHr(tab) {
+  currentHrTab = tab;
+  const list = dbHr.filter(x => x.type === tab);
+  const wrap = document.getElementById('hr-list');
+  
+  wrap.innerHTML = list.map(r => `
+    <div class="card flex-between">
+      <div>
+        <b style="font-size:16px;">${r.name}</b><br>
+        <span style="font-size:13px; color:var(--text-muted);">${r.role}</span>
+        ${tab === 'employee' ? `<div style="font-size:12px; color:var(--primary); font-weight:bold;">الراتب: ${r.salary} ج</div>` : ''}
+      </div>
+      ${currentUser.role === 'admin' ? `
+      <div>
+        <button class="btn-icon" style="background:var(--color-del);" onclick="delHr(${r.id})">🗑</button>
+      </div>` : ''}
+    </div>
+  `).join('') || '<div class="empty-state">لا يوجد بيانات</div>';
+}
+
+function openHrModal() {
+  document.getElementById('modal-root').innerHTML = `
+    <div class="modal-backdrop" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header"><span>إضافة ${currentHrTab === 'employee' ? 'موظف' : 'عضو مجلس إدارة'}</span><span style="cursor:pointer" onclick="closeModal()">✕</span></div>
+        <div class="modal-body">
+          <div class="input-group"><label>الاسم</label><input type="text" id="fhr-name" class="input-control"></div>
+          ${currentHrTab === 'employee' ? `
+            <div class="input-group"><label>المسمى الوظيفي</label><input type="text" id="fhr-role" class="input-control"></div>
+            <div class="input-group"><label>الراتب الأساسي</label><input type="number" id="fhr-salary" class="input-control"></div>
+          ` : `
+            <div class="input-group"><label>الصفة</label>
+              <select id="fhr-role" class="input-control">
+                <option value="رئيس مجلس الإدارة">رئيس مجلس الإدارة</option>
+                <option value="عضو مجلس إدارة">عضو مجلس إدارة</option>
+                <option value="أمين الصندوق">أمين الصندوق</option>
+                <option value="سكرتير">سكرتير</option>
+              </select>
+            </div>
+          `}
+        </div>
+        <div class="modal-footer"><button class="btn btn-green" onclick="saveHr()">حفظ التعديلات</button></div>
+      </div>
+    </div>`;
+}
+
+function saveHr() {
+  const rec = {
+    id: Date.now(),
+    type: currentHrTab,
+    name: document.getElementById('fhr-name').value.trim(),
+    role: document.getElementById('fhr-role').value,
+    salary: currentHrTab === 'employee' ? document.getElementById('fhr-salary').value : null
+  };
+  if(!rec.name) return toast('الاسم مطلوب');
+  dbHr.push(rec); saveLocal(); closeModal(); renderHr(currentHrTab);
+}
+function delHr(id) { dbHr = dbHr.filter(x => x.id !== id); saveLocal(); renderHr(currentHrTab); }
+
+// ================= 5. SETTINGS / USERS MODULE =================
+function renderUsers() {
+  const wrap = document.getElementById('users-list');
+  wrap.innerHTML = dbUsers.map(u => `
+    <div class="card flex-between">
+      <div>
+        <b style="font-size:16px;">${u.name}</b> (${u.user})<br>
+        <span style="font-size:12px; background:${u.role==='admin'?'var(--primary-light)':'#eee'}; color:${u.role==='admin'?'var(--primary)':'#666'}; padding:2px 6px; border-radius:4px;">${u.role==='admin'?'مدير النظام':'موظف عادي'}</span>
+      </div>
+      <div>
+        ${u.user !== 'admin' ? `<button class="btn-icon" style="background:var(--color-del);" onclick="delUser(${u.id})">🗑</button>` : '<span style="font-size:10px; color:#aaa;">أساسي</span>'}
+      </div>
+    </div>
+  `).join('');
+}
+
+function openUserModal() {
+  document.getElementById('modal-root').innerHTML = `
+    <div class="modal-backdrop" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header"><span>مستخدم جديد</span><span style="cursor:pointer" onclick="closeModal()">✕</span></div>
+        <div class="modal-body">
+          <div class="input-group"><label>الاسم الكامل</label><input type="text" id="fu-name" class="input-control"></div>
+          <div class="input-group"><label>اسم المستخدم (للدخول)</label><input type="text" id="fu-user" class="input-control" dir="ltr"></div>
+          <div class="input-group"><label>كلمة المرور</label><input type="text" id="fu-pass" class="input-control" dir="ltr"></div>
+          <div class="input-group"><label>الصلاحية</label>
+            <select id="fu-role" class="input-control">
+              <option value="user">موظف (إدخال حيازات فقط)</option>
+              <option value="admin">مدير (صلاحيات كاملة)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-green" onclick="saveUser()">حفظ المستخدم</button></div>
+      </div>
+    </div>`;
+}
+
+function saveUser() {
+  const rec = {
+    id: Date.now(),
+    name: document.getElementById('fu-name').value.trim(),
+    user: document.getElementById('fu-user').value.trim(),
+    pass: document.getElementById('fu-pass').value.trim(),
+    role: document.getElementById('fu-role').value
+  };
+  if(!rec.user || !rec.pass) return toast('بيانات الدخول مطلوبة');
+  if(dbUsers.find(x => x.user === rec.user)) return toast('اسم المستخدم موجود مسبقاً');
+  
+  dbUsers.push(rec); saveLocal(); closeModal(); renderUsers(); toast('تم الإضافة بنجاح');
+}
+function delUser(id) { 
+  if(!confirm('حذف هذا المستخدم من النظام؟')) return;
+  dbUsers = dbUsers.filter(x => x.id !== id); saveLocal(); renderUsers(); 
+}
+
+// BOOTSTRAP APP
+checkSession();
 </script>
 </body>
 </html>

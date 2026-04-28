@@ -180,28 +180,19 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)" style="display:none" />
 
 <script>
-// ================= DATABASES (Local Storage & Cloud) =================
+// ================= DATABASES (Cloud Only) =================
+// قم بوضع الرابط الجديد بعد تحديث كود الـ Google Apps Script
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4H9xj3Ck71vcuGW9g7J1mmVxwhV6V37nfSolb-KaRGGgeNGBfNsv90DgVae2lW9yQog/exec';
 
-let dbHoldings = []; // Cloud
-let dbInventory = JSON.parse(localStorage.getItem('app_inventory')) || [];
-let dbHr = JSON.parse(localStorage.getItem('app_hr')) || [];
-let dbUsers = JSON.parse(localStorage.getItem('app_users')) || [
-  { id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' },
-  { id: 2, user: 'user', pass: 'user123', role: 'user', name: 'موظف الإدخال' }
-];
+let dbHoldings = [];
+let dbInventory = [];
+let dbHr = [];
+let dbUsers = [];
 
 let currentUser = null;
 let currentInvCategory = '';
 let currentHrTab = 'employee';
-let editId = null; // General purpose ID for edits
-
-// Save Local DBs
-function saveLocal() {
-  localStorage.setItem('app_inventory', JSON.stringify(dbInventory));
-  localStorage.setItem('app_hr', JSON.stringify(dbHr));
-  localStorage.setItem('app_users', JSON.stringify(dbUsers));
-}
+let editId = null;
 
 // ================= AUTH & SESSION =================
 function attemptLogin() {
@@ -212,7 +203,7 @@ function attemptLogin() {
   if(found) {
     currentUser = found;
     localStorage.setItem('session_user', JSON.stringify(found));
-    localStorage.setItem('session_expire', Date.now() + (30 * 60 * 1000)); // 30 mins
+    localStorage.setItem('session_expire', Date.now() + (30 * 60 * 1000));
     initApp();
   } else {
     document.getElementById('login-err').style.display = 'block';
@@ -222,11 +213,36 @@ function attemptLogin() {
 function checkSession() {
   const expire = localStorage.getItem('session_expire');
   const user = localStorage.getItem('session_user');
-  if(user && expire && Date.now() < parseInt(expire)) {
-    currentUser = JSON.parse(user);
-    localStorage.setItem('session_expire', Date.now() + (30 * 60 * 1000)); // Renew
-    initApp();
-  }
+  
+  // قبل أي شيء نُحمل البيانات للتأكد من تحديث حسابات المستخدمين
+  fetch(SCRIPT_URL)
+    .then(res => res.json())
+    .then(data => {
+      dbHoldings = data.holdings || [];
+      dbInventory = data.inventory || [];
+      dbHr = data.hr || [];
+      dbUsers = (data.users && data.users.length > 0) ? data.users : [
+        { id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }
+      ];
+
+      if(user && expire && Date.now() < parseInt(expire)) {
+        // فحص إذا كان المستخدم مسجل مسبقاً
+        const savedUser = JSON.parse(user);
+        const stillExists = dbUsers.find(x => x.user === savedUser.user && x.pass === savedUser.pass);
+        if (stillExists) {
+          currentUser = stillExists;
+          localStorage.setItem('session_expire', Date.now() + (30 * 60 * 1000));
+          initApp();
+        } else {
+          logout();
+        }
+      }
+    })
+    .catch(err => {
+      toast('لا يوجد اتصال بالإنترنت');
+      // الاعتماد على حساب المدير الافتراضي في حالة الأوفلاين لأول مرة
+      dbUsers = [{ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }];
+    });
 }
 
 function logout() {
@@ -241,10 +257,9 @@ function initApp() {
   document.getElementById('sidebar-role-text').textContent = currentUser.name + (currentUser.role === 'admin' ? ' (مدير)' : ' (موظف)');
   
   document.querySelectorAll('.admin-only').forEach(el => {
-    el.style.display = currentUser.role === 'admin' ? '' : 'none'; // '' reverts to default CSS
+    el.style.display = currentUser.role === 'admin' ? '' : 'none';
   });
   
-  loadHoldingsFromCloud();
   switchView('holdings');
 }
 
@@ -258,7 +273,6 @@ function switchView(viewName, param = '') {
   document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
   
-  // Highlight menu
   if(param) {
     document.querySelector(`.menu-item[onclick*="${param}"]`)?.classList.add('active');
   } else {
@@ -315,16 +329,7 @@ function toast(msg) {
 function closeModal() { document.getElementById('modal-root').innerHTML = ''; editId = null; }
 function areaToFeddan(f,q,s){ return (parseFloat(f)||0)+(parseFloat(q)||0)/24+(parseFloat(s)||0)/576; }
 
-// ================= 1. HOLDINGS MODULE (CLOUD) =================
-async function loadHoldingsFromCloud() {
-  try {
-    const res = await fetch(SCRIPT_URL);
-    const data = await res.json();
-    dbHoldings = data.map(r => ({ ...r, id: String(r.id).replace(/^0+/, '') || '0' }));
-    if(document.getElementById('view-holdings').classList.contains('active')) renderHoldings();
-  } catch(e) { toast('يعمل في وضع عدم الاتصال'); }
-}
-
+// ================= 1. HOLDINGS MODULE =================
 function renderHoldings() {
   const q = document.getElementById('h-search').value.toLowerCase();
   let list = dbHoldings.filter(r => String(r.id).includes(q) || (r.name||'').toLowerCase().includes(q));
@@ -412,14 +417,17 @@ async function saveHolding() {
   }
   
   closeModal(); renderHoldings(); toast('جاري الحفظ...');
-  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', record: rec }) }); toast('✓ تم الحفظ'); } catch(e){}
+  try { 
+    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'الحيازات', record: rec }) }); 
+    toast('✓ تم الحفظ'); 
+  } catch(e) { toast('❌ تعذر الحفظ بالسحابة'); }
 }
 
 async function delHolding(id) {
   if(!confirm('هل أنت متأكد من الحذف النهائي؟')) return;
   dbHoldings = dbHoldings.filter(x => String(x.id) !== String(id));
   renderHoldings(); toast('جاري الحذف...');
-  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', id: String(id) }) }); } catch(e){}
+  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'الحيازات', id: String(id) }) }); } catch(e){}
 }
 
 // مركز البيانات (Excel)
@@ -471,7 +479,7 @@ function printHoldings() {
   win.document.write(html + `</table></body></html>`); win.document.close(); setTimeout(()=>win.print(), 300);
 }
 
-// ================= 2. INVENTORY MODULE (LOCAL) =================
+// ================= 2. INVENTORY MODULE =================
 function renderInventory() {
   const list = dbInventory.filter(x => x.category === currentInvCategory);
   let totalVal = 0;
@@ -520,13 +528,13 @@ function openInventoryModal(id = null) {
           <div class="input-group"><label>سعر الشراء للوحدة (ج.م)</label><input type="number" id="fi-price" class="input-control" value="${r.price||0}"></div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-green" onclick="saveInventory()">حفظ التعديلات (محلياً)</button>
+          <button class="btn btn-green" onclick="saveInventory()">حفظ للمخزن</button>
         </div>
       </div>
     </div>`;
 }
 
-function saveInventory() {
+async function saveInventory() {
   const rec = {
     id: editId || Date.now(),
     category: currentInvCategory,
@@ -542,12 +550,18 @@ function saveInventory() {
   if(editId) { const idx = dbInventory.findIndex(x => x.id === editId); dbInventory[idx] = rec; }
   else { dbInventory.push(rec); }
   
-  saveLocal(); closeModal(); renderInventory(); toast('تم الحفظ');
+  closeModal(); renderInventory(); toast('جاري الحفظ بالسحابة...');
+  try { 
+    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المخازن', record: rec }) }); 
+    toast('✓ تم الحفظ'); 
+  } catch(e){ toast('❌ خطأ في الإرسال'); }
 }
-function delInventory(id) {
-  if(!confirm('حذف؟')) return;
+
+async function delInventory(id) {
+  if(!confirm('حذف الصنف؟')) return;
   dbInventory = dbInventory.filter(x => x.id !== id);
-  saveLocal(); renderInventory();
+  renderInventory();
+  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'المخازن', id: id }) }); } catch(e){}
 }
 
 function printInventory() {
@@ -569,7 +583,7 @@ function renderTreasury() {
   ['أسمدة', 'مبيدات', 'مغذيات'].forEach(cat => {
     const items = dbInventory.filter(x => x.category === cat);
     let catCash = 0;
-    items.forEach(i => catCash += (parseFloat(i.cashOut)||0) * (parseFloat(i.price)||0)); // Assuming selling at cost for demo, or you can add "selling price"
+    items.forEach(i => catCash += (parseFloat(i.cashOut)||0) * (parseFloat(i.price)||0)); 
     
     totalCashSalesValue += catCash;
     summaryHtml += `
@@ -583,7 +597,7 @@ function renderTreasury() {
   document.getElementById('treasury-summary').innerHTML = summaryHtml;
 }
 
-// ================= 4. HR MODULE (LOCAL) =================
+// ================= 4. HR MODULE =================
 function renderHr(tab) {
   currentHrTab = tab;
   const list = dbHr.filter(x => x.type === tab);
@@ -630,7 +644,7 @@ function openHrModal() {
     </div>`;
 }
 
-function saveHr() {
+async function saveHr() {
   const rec = {
     id: Date.now(),
     type: currentHrTab,
@@ -639,9 +653,17 @@ function saveHr() {
     salary: currentHrTab === 'employee' ? document.getElementById('fhr-salary').value : null
   };
   if(!rec.name) return toast('الاسم مطلوب');
-  dbHr.push(rec); saveLocal(); closeModal(); renderHr(currentHrTab);
+  dbHr.push(rec); 
+  
+  closeModal(); renderHr(currentHrTab); toast('جاري الحفظ...');
+  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'شئون_العاملين', record: rec }) }); } catch(e){}
 }
-function delHr(id) { dbHr = dbHr.filter(x => x.id !== id); saveLocal(); renderHr(currentHrTab); }
+
+async function delHr(id) { 
+  if(!confirm('حذف؟')) return;
+  dbHr = dbHr.filter(x => x.id !== id); renderHr(currentHrTab); 
+  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'شئون_العاملين', id: id }) }); } catch(e){}
+}
 
 // ================= 5. SETTINGS / USERS MODULE =================
 function renderUsers() {
@@ -680,7 +702,7 @@ function openUserModal() {
     </div>`;
 }
 
-function saveUser() {
+async function saveUser() {
   const rec = {
     id: Date.now(),
     name: document.getElementById('fu-name').value.trim(),
@@ -691,11 +713,15 @@ function saveUser() {
   if(!rec.user || !rec.pass) return toast('بيانات الدخول مطلوبة');
   if(dbUsers.find(x => x.user === rec.user)) return toast('اسم المستخدم موجود مسبقاً');
   
-  dbUsers.push(rec); saveLocal(); closeModal(); renderUsers(); toast('تم الإضافة بنجاح');
+  dbUsers.push(rec); 
+  closeModal(); renderUsers(); toast('جاري الحفظ...');
+  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المستخدمين', record: rec }) }); toast('تم الإضافة بنجاح'); } catch(e){}
 }
-function delUser(id) { 
+
+async function delUser(id) { 
   if(!confirm('حذف هذا المستخدم من النظام؟')) return;
-  dbUsers = dbUsers.filter(x => x.id !== id); saveLocal(); renderUsers(); 
+  dbUsers = dbUsers.filter(x => x.id !== id); renderUsers(); 
+  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'المستخدمين', id: id }) }); } catch(e){}
 }
 
 // BOOTSTRAP APP

@@ -18,14 +18,16 @@
 }
 html, body { height: 100%; background: var(--bg-page); color: var(--text-main); overflow-x: hidden; }
 
-/* ================= LOGIN SCREEN ================= */
+/* ================= LOGIN SCREEN (Updated Background) ================= */
 #login-view { 
   display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; 
+  /* خلفية السنابل الخضراء مع طبقة شفافة خضراء داكنة فوقها لجمال التصميم */
   background: linear-gradient(rgba(20, 70, 30, 0.8), rgba(46, 125, 50, 0.8)), url('https://images.unsplash.com/photo-1590682680695-43b964a3ae17?q=80&w=1080&auto=format&fit=crop') center/cover no-repeat;
   padding: 20px; z-index: 9999; position: fixed; inset: 0; 
 }
 .login-card { 
-  background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95); 
+  backdrop-filter: blur(10px);
   padding: 30px 24px; border-radius: var(--radius-lg); width: 100%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); text-align: center; 
 }
 .login-logo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto 16px; border: 3px solid var(--primary-light); background: #f0f0f0; }
@@ -35,7 +37,6 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 .btn-login { width: 100%; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; }
 .btn-login:active { transform: scale(0.98); background: var(--secondary); }
 .login-error { color: var(--color-del); font-size: 13px; margin-top: 10px; display: none; font-weight: bold; }
-.link-btn { margin-top: 15px; cursor: pointer; color: var(--primary); font-size: 14px; font-weight: bold; text-decoration: underline; }
 
 /* ================= APP LAYOUT ================= */
 #app-view { display: none; height: 100vh; flex-direction: column; max-width: 600px; margin: 0 auto; background: var(--bg-page); position: relative; }
@@ -48,7 +49,7 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 .sidebar-header { background: var(--primary); color: white; padding: 24px 20px; text-align: center; }
 .menu-item { display: flex; align-items: center; padding: 14px 20px; color: var(--text-main); font-size: 15px; font-weight: 600; cursor: pointer; border-bottom: 1px solid var(--bg-page); text-decoration: none; }
 .menu-item.active { background: var(--primary-light); color: var(--primary); border-right: 4px solid var(--primary); }
-.menu-item.admin-only { display: none; } 
+.menu-item.admin-only { display: none; } /* سيتم تعديلها برمجياً لـ flex */
 .menu-icon { margin-left: 12px; font-size: 18px; }
 .btn-logout { margin: 20px; background: var(--bg-del); color: var(--color-del); border: none; padding: 12px; border-radius: var(--radius-sm); cursor: pointer; font-weight: bold; }
 
@@ -98,27 +99,14 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 <body>
 
 <div id="login-view">
-  
-  <div class="login-card" id="login-card-main">
+  <div class="login-card">
     <img src="https://cdn-icons-png.flaticon.com/512/10543/10543163.png" alt="Logo" class="login-logo">
     <div class="login-title">جمعية الناصرية الزراعية</div>
-    <input type="text" id="login-user" class="login-input" placeholder="اسم المستخدم" autocomplete="off" dir="ltr">
-    <input type="password" id="login-pass" class="login-input" placeholder="كلمة المرور" dir="ltr">
+    <input type="text" id="login-user" class="login-input" placeholder="اسم المستخدم" autocomplete="off">
+    <input type="password" id="login-pass" class="login-input" placeholder="كلمة المرور">
     <button class="btn-login" onclick="attemptLogin()">تسجيل الدخول</button>
     <div id="login-err" class="login-error">البيانات غير صحيحة!</div>
-    <div class="link-btn" onclick="showChangePassLogin()">🔄 تغيير كلمة المرور للمستخدم؟</div>
   </div>
-
-  <div class="login-card" id="login-card-change" style="display:none;">
-    <img src="https://cdn-icons-png.flaticon.com/512/10543/10543163.png" alt="Logo" class="login-logo" style="width:70px; height:70px;">
-    <div class="login-title" style="font-size:18px;">تغيير كلمة المرور</div>
-    <input type="text" id="ch-user" class="login-input" placeholder="اسم المستخدم" autocomplete="off" dir="ltr">
-    <input type="password" id="ch-old" class="login-input" placeholder="كلمة المرور القديمة" dir="ltr">
-    <input type="text" id="ch-new" class="login-input" placeholder="كلمة المرور الجديدة" dir="ltr">
-    <button class="btn-login" style="background:var(--color-edit); margin-bottom:10px;" onclick="doChangePassLogin()">حفظ وتحديث</button>
-    <button class="btn-login" style="background:#aaa;" onclick="hideChangePassLogin()">رجوع للخلف</button>
-  </div>
-
 </div>
 
 <div id="app-view">
@@ -135,7 +123,7 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
       <a class="menu-item" onclick="switchView('inventory', 'مغذيات')"><span class="menu-icon">🌱</span> قسم المغذيات</a>
       <a class="menu-item admin-only" onclick="switchView('treasury')"><span class="menu-icon">💰</span> الخزينة والحسابات</a>
       <a class="menu-item admin-only" onclick="switchView('hr')"><span class="menu-icon">👥</span> شئون العاملين</a>
-      <a class="menu-item admin-only" onclick="switchView('settings')"><span class="menu-icon">⚙️</span> إعدادات المستخدمين</a>
+      <a class="menu-item admin-only" onclick="switchView('settings')"><span class="menu-icon">⚙️</span> إعدادات النظام (المستخدمين)</a>
     </div>
     <button class="btn-logout" onclick="logout()">🚪 تسجيل الخروج</button>
   </div>
@@ -205,14 +193,13 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)" style="display:none" />
 
 <script>
-// ================= DATABASES (Cloud & Local Sync) =================
+// ================= DATABASES (Cloud Only) =================
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyChwqdSqgWMKWh4eZiXWRqBnbeXpApFLMwS5keQTd7ssFwUACqHXYAB2kyyMWwFLplcw/exec';
 
 let dbHoldings = [];
 let dbInventory = [];
 let dbHr = [];
-// تحميل المستخدمين من الذاكرة المحلية كطبقة حماية لضمان عدم الطرد أثناء تأخر السحابة
-let dbUsers = JSON.parse(localStorage.getItem('app_users')) || [];
+let dbUsers = [];
 
 let currentUser = null;
 let currentInvCategory = '';
@@ -220,44 +207,6 @@ let currentHrTab = 'employee';
 let editId = null;
 
 // ================= AUTH & SESSION =================
-
-// التبديل في شاشة الدخول بين تسجيل الدخول وتغيير كلمة السر
-function showChangePassLogin() {
-    document.getElementById('login-card-main').style.display = 'none';
-    document.getElementById('login-card-change').style.display = 'block';
-}
-function hideChangePassLogin() {
-    document.getElementById('login-card-main').style.display = 'block';
-    document.getElementById('login-card-change').style.display = 'none';
-}
-
-async function doChangePassLogin() {
-    const u = document.getElementById('ch-user').value.trim();
-    const pOld = document.getElementById('ch-old').value.trim();
-    const pNew = document.getElementById('ch-new').value.trim();
-
-    if(!u || !pOld || !pNew) {
-        alert('يرجى تعبئة جميع الحقول'); return;
-    }
-
-    const idx = dbUsers.findIndex(x => x.user === u && x.pass === pOld);
-    if(idx === -1) {
-        alert('اسم المستخدم أو كلمة المرور القديمة غير صحيحة'); return;
-    }
-
-    dbUsers[idx].pass = pNew;
-    localStorage.setItem('app_users', JSON.stringify(dbUsers)); // حفظ محلياً فوراً
-    
-    alert('تم تغيير كلمة المرور بنجاح، سيتم حفظها في السحابة وتوجيهك للدخول.');
-    hideChangePassLogin();
-    
-    // وضع الباسورد الجديد لتسهيل الدخول
-    document.getElementById('login-user').value = u;
-    document.getElementById('login-pass').value = pNew;
-
-    try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المستخدمين', record: dbUsers[idx] }) }); } catch(e){}
-}
-
 function attemptLogin() {
   const u = document.getElementById('login-user').value.trim();
   const p = document.getElementById('login-pass').value.trim();
@@ -272,47 +221,42 @@ function attemptLogin() {
   }
 }
 
-// الدخول الفوري وتحديث السحابة في الخلفية
+// دالة تفقد الجلسة الفوري (لحذف مشكلة الخروج التلقائي)
 function checkSession() {
   const userStr = localStorage.getItem('session_user');
   if(userStr) {
     currentUser = JSON.parse(userStr);
-    initApp(); 
+    initApp(); // الدخول فوراً للبرنامج بدون انتظار السحابة لتوفير تجربة سريعة
   }
 
+  // تحديث البيانات من السحابة في الخلفية
   fetch(SCRIPT_URL)
     .then(res => res.json())
     .then(data => {
       dbHoldings = data.holdings || [];
       dbInventory = data.inventory || [];
       dbHr = data.hr || [];
-      
-      if (data.users && data.users.length > 0) {
-        dbUsers = data.users;
-        localStorage.setItem('app_users', JSON.stringify(dbUsers)); // مزامنة الذاكرة المحلية
-      } else if (!dbUsers.length) {
-        dbUsers = [{ id: 1, user: 'ahmed', pass: 'ahmed2026', role: 'admin', name: 'المدير العام' }];
-        localStorage.setItem('app_users', JSON.stringify(dbUsers));
-      }
+      dbUsers = (data.users && data.users.length > 0) ? data.users : [
+        { id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }
+      ];
 
+      // التأكد من أن المستخدم الحالي لم يتم حذفه من قبل مدير آخر
       if (currentUser) {
-        const userInCloud = dbUsers.find(x => String(x.id) === String(currentUser.id));
-        if (!userInCloud) {
-          logout(); // طرد المستخدم إذا تم حذفه
+        const stillExists = dbUsers.find(x => String(x.user) === String(currentUser.user));
+        if (!stillExists) {
+          logout();
         } else {
-          // تحديث الصلاحية والاسم إذا تغيروا
-          currentUser.role = userInCloud.role;
-          currentUser.name = userInCloud.name;
+          // تحديث الصلاحيات إن تغيرت
+          currentUser = stillExists;
           localStorage.setItem('session_user', JSON.stringify(currentUser));
-          updateAdminVisibility();
-          reRenderCurrentView();
+          updateAdminVisibility(); // تحديث القوائم
+          reRenderCurrentView(); // تحديث الشاشة الحالية بالبيانات الجديدة
         }
       }
     })
     .catch(err => {
       if(!dbUsers.length) {
-        dbUsers = [{ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }];
-        localStorage.setItem('app_users', JSON.stringify(dbUsers));
+         dbUsers = [{ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }];
       }
     });
 }
@@ -323,11 +267,12 @@ function logout() {
 }
 
 function updateAdminVisibility() {
+  // تفعيل وإظهار قوائم المدير بشكل صحيح
   document.querySelectorAll('.admin-only').forEach(el => {
     if(el.tagName === 'A' || el.classList.contains('menu-item')) {
       el.style.display = currentUser.role === 'admin' ? 'flex' : 'none';
     } else {
-      el.style.display = currentUser.role === 'admin' ? 'block' : 'none';
+      el.style.display = currentUser.role === 'admin' ? 'block' : 'none'; // للأزرار العادية
     }
   });
 }
@@ -339,9 +284,13 @@ function initApp() {
   
   updateAdminVisibility();
   
+  // إذا لم نكن في قسم معين، اذهب للحيازات
   const activeView = document.querySelector('.view-section.active');
-  if(!activeView || activeView.id === 'view-holdings') switchView('holdings');
-  else reRenderCurrentView();
+  if(!activeView || activeView.id === 'view-holdings') {
+    switchView('holdings');
+  } else {
+    reRenderCurrentView();
+  }
 }
 
 function reRenderCurrentView() {
@@ -437,10 +386,10 @@ function renderHoldings() {
       <div style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">الرقم القومي: ${r.nationalId||'---'}</div>
       
       <div style="display:flex; gap:10px; font-size:12px; font-weight:bold;">
-        <span style="border:1px solid #ddd; background:#fafafa; padding:6px; border-radius:6px; flex:1; text-align:center;">
+        <span style="border:1px solid #ddd; background:#fafafa; padding:4px 8px; border-radius:4px; flex:1; text-align:center;">
           🌾 ${r.feddan||0}ف, ${r.qirat||0}ق, ${r.sahm||0}س
         </span>
-        <span style="border:1px solid #ddd; background:#fafafa; padding:6px; border-radius:6px; flex:1; text-align:center;">
+        <span style="border:1px solid #ddd; background:#fafafa; padding:4px 8px; border-radius:4px; flex:1; text-align:center;">
           📍 ${r.basin||'بدون حوض'}
         </span>
       </div>
@@ -816,18 +765,8 @@ async function saveUser() {
     dbUsers.push(rec); 
   } else {
     const idx = dbUsers.findIndex(x => String(x.id) === String(editId));
-    if(idx > -1) dbUsers[idx] = rec; else dbUsers.push(rec);
-
-    // إذا كان المدير يعدل حسابه الخاص (باسورد أو اسم)، يجب تحديث الجلسة فوراً لكي لا يطرد نفسه
-    if(currentUser && String(currentUser.id) === String(editId)) {
-        currentUser = rec;
-        localStorage.setItem('session_user', JSON.stringify(currentUser));
-        updateAdminVisibility(); 
-    }
+    dbUsers[idx] = rec;
   }
-  
-  // حفظ محلي لضمان الاستقرار ثم الرفع للسحابة
-  localStorage.setItem('app_users', JSON.stringify(dbUsers));
   
   closeModal(); renderUsers(); toast('جاري الحفظ...');
   try { 
@@ -838,9 +777,7 @@ async function saveUser() {
 
 async function delUser(id) { 
   if(!confirm('حذف هذا المستخدم من النظام؟')) return;
-  dbUsers = dbUsers.filter(x => String(x.id) !== String(id)); 
-  localStorage.setItem('app_users', JSON.stringify(dbUsers));
-  renderUsers(); 
+  dbUsers = dbUsers.filter(x => String(x.id) !== String(id)); renderUsers(); 
   try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'المستخدمين', id: String(id) }) }); } catch(e){}
 }
 

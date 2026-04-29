@@ -167,7 +167,7 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 
   <div id="view-holdings" class="view-section active">
     <div style="display:flex; gap:8px; margin-bottom:12px;">
-      <input type="search" id="h-search" class="input-control" placeholder="بحث برقم الحيازة أو الاسم..." oninput="renderHoldings()">
+      <input type="search" id="h-search" class="input-control" placeholder="بحث شامل (الاسم، الرقم، الحوض)..." oninput="renderHoldings()">
     </div>
     <div class="stats-box flex-between" style="padding:10px;">
       <div><div style="font-size:20px;font-weight:bold;color:var(--primary)" id="h-count">0</div><div style="font-size:11px">إجمالي الحيازات</div></div>
@@ -220,7 +220,6 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 
 <script>
 // ================= DATABASES (Local First & Cloud Sync) =================
-// ضع الرابط السحابي الخاص بك هنا إذا تم تغييره
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyChwqdSqgWMKWh4eZiXWRqBnbeXpApFLMwS5keQTd7ssFwUACqHXYAB2kyyMWwFLplcw/exec';
 
 let dbHoldings = JSON.parse(localStorage.getItem('local_holdings')) || [];
@@ -235,7 +234,7 @@ function enforceAdminFailsafe() {
         dbUsers.push({ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' });
         localStorage.setItem('local_users', JSON.stringify(dbUsers));
     } else if (adminExists.role !== 'admin') {
-        adminExists.role = 'admin'; // التأكد أن صلاحيته لم تتغير
+        adminExists.role = 'admin'; 
         localStorage.setItem('local_users', JSON.stringify(dbUsers));
     }
 }
@@ -262,7 +261,7 @@ function bootApp() {
         if(data.hr) { dbHr = data.hr; localStorage.setItem('local_hr', JSON.stringify(dbHr)); }
         if(data.users && data.users.length > 0) { 
             dbUsers = data.users; 
-            enforceAdminFailsafe(); // إعادة تطبيق صمام الأمان بعد التحميل من السحابة
+            enforceAdminFailsafe(); 
             localStorage.setItem('local_users', JSON.stringify(dbUsers)); 
         }
 
@@ -439,7 +438,7 @@ function switchView(viewName, param = '') {
   if(document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
 }
 
-// ================= UTILS =================
+// ================= UTILS & ARABIC NORMALIZATION =================
 function toast(msg) {
   const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
   document.body.appendChild(t); setTimeout(() => t.remove(), 2500);
@@ -447,15 +446,43 @@ function toast(msg) {
 function closeModal() { document.getElementById('modal-root').innerHTML = ''; editId = null; }
 function areaToFeddan(f,q,s){ return (parseFloat(f)||0)+(parseFloat(q)||0)/24+(parseFloat(s)||0)/576; }
 
+// دالة توحيد الحروف للبحث الذكي والعميق
+function normalizeArabic(text) {
+  if (!text) return '';
+  return text.toString().toLowerCase()
+    .replace(/[أإآ]/g, 'ا')         // توحيد الألف
+    .replace(/ة/g, 'ه')            // توحيد التاء المربوطة والهاء
+    .replace(/ى/g, 'ي')            // توحيد الياء
+    .replace(/عبد\s+/g, 'عبد')     // حل مشكلة المسافة (عبد الحميد -> عبدالحميد)
+    .replace(/ابو\s+/g, 'ابو')     // حل مشكلة المسافة (ابو بكر -> ابوبكر)
+    .replace(/[\u064B-\u065F]/g, ''); // إزالة التشكيل
+}
+
 // ================= 1. HOLDINGS MODULE =================
 function renderHoldings() {
-  const q = document.getElementById('h-search').value.toLowerCase();
-  let list = dbHoldings.filter(r => String(r.id).includes(q) || (r.name||'').toLowerCase().includes(q));
+  const rawQ = document.getElementById('h-search').value;
+  const q = normalizeArabic(rawQ); // تطبيق توحيد الحروف على نص البحث
+  
+  let list = dbHoldings.filter(r => {
+    const normName = normalizeArabic(r.name);
+    const normBasin = normalizeArabic(r.basin);
+    const nid = String(r.nationalId || '');
+    const id = String(r.id);
+    
+    // البحث الشامل في جميع الحقول
+    return id.includes(q) || normName.includes(q) || normBasin.includes(q) || nid.includes(q);
+  });
   
   document.getElementById('h-count').textContent = dbHoldings.length;
   document.getElementById('h-area').textContent = dbHoldings.reduce((a,r) => a + areaToFeddan(r.feddan, r.qirat, r.sahm), 0).toFixed(2);
   
   const wrap = document.getElementById('holdings-list');
+  
+  if (list.length === 0) {
+      wrap.innerHTML = `<div class="empty-state" style="text-align:center; padding:30px; color:#999;">لا توجد نتائج مطابقة للبحث</div>`;
+      return;
+  }
+
   wrap.innerHTML = list.map(r => `
     <div class="card">
       <div class="card-header">
@@ -554,6 +581,7 @@ async function delHolding(id) {
   try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'الحيازات', id: String(id) }) }); } catch(e){}
 }
 
+// مركز البيانات (Excel)
 function openExcelModal() {
   document.getElementById('modal-root').innerHTML = `
     <div class="modal-backdrop" onclick="closeModal()">
@@ -674,7 +702,7 @@ async function saveInventory() {
   else { dbInventory.push(rec); }
   
   localStorage.setItem('local_inventory', JSON.stringify(dbInventory));
-  closeModal(); renderInventory(); toast('جاري الحفظ...');
+  closeModal(); renderInventory(); toast('جاري الحفظ بالسحابة...');
   try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المخازن', record: rec }) }); } catch(e){}
 }
 
@@ -737,7 +765,7 @@ function renderHr(tab) {
         <button class="btn-icon" style="background:var(--color-del);" onclick="delHr('${r.id}')">🗑</button>
       </div>` : ''}
     </div>
-  `).join('') || '<div class="empty-state" style="text-align:center; padding:30px; color:#999;">لا توجد بيانات</div>';
+  `).join('') || '<div class="empty-state" style="text-align:center; padding:30px; color:#999;">لا يوجد بيانات</div>';
 }
 
 function openHrModal() {
@@ -761,7 +789,7 @@ function openHrModal() {
             </div>
           `}
         </div>
-        <div class="modal-footer"><button class="btn btn-green" onclick="saveHr()">حفظ البيانات</button></div>
+        <div class="modal-footer"><button class="btn btn-green" onclick="saveHr()">حفظ التعديلات</button></div>
       </div>
     </div>`;
 }

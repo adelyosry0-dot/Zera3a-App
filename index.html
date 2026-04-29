@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#2E7D32">
 <title>جمعية الناصرية الزراعية</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 <style>
 /* ================= CSS RESET & VARIABLES ================= */
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
@@ -14,25 +14,13 @@
   --bg-page: #F4F7F6; --surface: #FFFFFF; --text-main: #2C3E50; --text-muted: #7F8C8D; --border-color: #E0E6ED;
   --radius-sm: 8px; --radius-md: 12px; --radius-lg: 20px;
   --shadow-card: 0 4px 15px rgba(0,0,0,0.05);
-  --color-edit: #1976D2; --bg-edit: #E3F2FD; --color-copy: #607D8B; --bg-copy: #ECEFF1; --color-del: #D32F2F; --bg-del: #FFEBEE;
+  --color-edit: #1976D2; --bg-edit: #E3F2FD; --color-del: #D32F2F; --bg-del: #FFEBEE;
 }
 html, body { height: 100%; background: var(--bg-page); color: var(--text-main); overflow-x: hidden; }
 
-/* ================= LOADING SCREEN ================= */
-#loading-view {
-  position: fixed; inset: 0; background: var(--primary); z-index: 10000;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;
-}
-.spinner {
-  width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-top-color: white; 
-  border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
-
 /* ================= LOGIN SCREEN ================= */
 #login-view { 
-  display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; 
+  display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; 
   background: linear-gradient(rgba(20, 70, 30, 0.8), rgba(46, 125, 50, 0.8)), url('https://images.unsplash.com/photo-1590682680695-43b964a3ae17?q=80&w=1080&auto=format&fit=crop') center/cover no-repeat;
   padding: 20px; z-index: 9999; position: fixed; inset: 0; 
 }
@@ -40,7 +28,13 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
   background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
   padding: 30px 24px; border-radius: var(--radius-lg); width: 100%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); text-align: center; 
 }
-.login-logo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto 16px; border: 3px solid var(--primary-light); background: #f0f0f0; }
+
+/* --- تنسيق اللوجو --- */
+.login-logo { 
+  width: 100px; height: 100px; border-radius: 50%; object-fit: contain; /* object-fit: contain ليظهر اللوجو بالكامل بدون قص */
+  margin: 0 auto 16px; border: 3px solid var(--primary-light); background: #fff; padding: 5px;
+}
+
 .login-title { font-size: 24px; font-weight: 700; color: var(--primary); margin-bottom: 24px; text-shadow: 0px 1px 2px rgba(0,0,0,0.1); }
 .login-input { width: 100%; border: 1.5px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px; font-size: 15px; margin-bottom: 16px; background: #fff; outline: none; }
 .login-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
@@ -48,6 +42,13 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 .btn-login:active { transform: scale(0.98); background: var(--secondary); }
 .login-error { color: var(--color-del); font-size: 13px; margin-top: 10px; display: none; font-weight: bold; }
 .link-btn { margin-top: 15px; cursor: pointer; color: var(--primary); font-size: 14px; font-weight: bold; text-decoration: underline; }
+
+/* ================= SYNC INDICATOR ================= */
+.sync-badge {
+  position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 20px; font-size: 11px; z-index: 10000; display: flex; align-items: center; gap: 5px;
+}
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #FFC107; animation: blink 1s infinite alternate; }
+@keyframes blink { 50% { opacity: 0.5; } }
 
 /* ================= APP LAYOUT ================= */
 #app-view { display: none; height: 100vh; flex-direction: column; max-width: 600px; margin: 0 auto; background: var(--bg-page); position: relative; }
@@ -83,7 +84,7 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 .btn { padding: 8px 12px; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; flex: 1; text-align: center; color: white; transition: 0.2s; }
 .btn:active { transform: scale(0.95); opacity: 0.8; }
 .btn-blue { background: var(--color-edit); } .btn-red { background: var(--color-del); } .btn-green { background: var(--primary); }
-.btn-gray { background: var(--color-copy); }
+.btn-gray { background: #607D8B; }
 
 /* Inputs */
 .input-group { margin-bottom: 12px; }
@@ -109,15 +110,14 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 </head>
 <body>
 
-<div id="loading-view">
-  <div class="spinner"></div>
-  <div class="loading-text" id="loading-msg">جاري تحميل البيانات من جوجل...</div>
+<div id="sync-status" class="sync-badge" style="display:none;">
+  <div class="sync-dot"></div> <span id="sync-text">جاري المزامنة...</span>
 </div>
 
 <div id="login-view">
-  
   <div class="login-card" id="login-card-main">
-    <img src="https://cdn-icons-png.flaticon.com/512/10543/10543163.png" alt="Logo" class="login-logo">
+    
+    <img src="https://cdn-icons-png.flaticon.com/512/10543/10543163.png" alt="Logo" class="login-logo" id="app-logo">
     <div class="login-title">جمعية الناصرية الزراعية</div>
     <input type="text" id="login-user" class="login-input" placeholder="اسم المستخدم" autocomplete="off" dir="ltr">
     <input type="password" id="login-pass" class="login-input" placeholder="كلمة المرور" dir="ltr">
@@ -135,7 +135,6 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
     <button class="btn-login" style="background:var(--color-edit); margin-bottom:10px;" onclick="doChangePassLogin()">حفظ وتحديث</button>
     <button class="btn-login" style="background:#aaa;" onclick="hideChangePassLogin()">رجوع للخلف</button>
   </div>
-
 </div>
 
 <div id="app-view">
@@ -164,8 +163,7 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
         <h1 style="font-size:16px; margin:0;" id="app-title">قسم الحيازات</h1>
       </div>
     </div>
-    <div style="display:flex;" id="header-actions">
-      </div>
+    <div style="display:flex;" id="header-actions"></div>
   </div>
 
   <div id="view-holdings" class="view-section active">
@@ -207,7 +205,7 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
       <button class="btn btn-blue" onclick="renderHr('board')">مجلس الإدارة</button>
     </div>
     <div id="hr-list"></div>
-    <button class="fab" onclick="openHrModal()">➕ إضافة عضو/موظف</button>
+    <button class="fab admin-only" onclick="openHrModal()">➕ إضافة عضو/موظف</button>
   </div>
 
   <div id="view-settings" class="view-section">
@@ -222,69 +220,78 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)" style="display:none" />
 
 <script>
-// ================= DATABASES (Cloud & Local Sync) =================
+// ================= DATABASES (Local First & Cloud Sync) =================
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyChwqdSqgWMKWh4eZiXWRqBnbeXpApFLMwS5keQTd7ssFwUACqHXYAB2kyyMWwFLplcw/exec';
 
-let dbHoldings = [];
-let dbInventory = [];
-let dbHr = [];
-let dbUsers = [];
+// التحميل السريع من الذاكرة المحلية (يحل مشكلة البطء)
+let dbHoldings = JSON.parse(localStorage.getItem('local_holdings')) || [];
+let dbInventory = JSON.parse(localStorage.getItem('local_inventory')) || [];
+let dbHr = JSON.parse(localStorage.getItem('local_hr')) || [];
+let dbUsers = JSON.parse(localStorage.getItem('local_users')) || [];
+
+if(dbUsers.length === 0) {
+    dbUsers = [{ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }];
+    localStorage.setItem('local_users', JSON.stringify(dbUsers));
+}
 
 let currentUser = null;
 let currentInvCategory = '';
 let currentHrTab = 'employee';
 let editId = null;
 
-// ================= BOOTSTRAP APP & LOADING =================
-// هذه الدالة هي أول شيء يعمل عند فتح البرنامج لحل مشكلة التداخل والتأخير
-async function bootApp() {
-    try {
-        const res = await fetch(SCRIPT_URL);
-        const data = await res.json();
-        
-        dbHoldings = data.holdings || [];
-        dbInventory = data.inventory || [];
-        dbHr = data.hr || [];
-        
-        if (data.users && data.users.length > 0) {
-            dbUsers = data.users;
-            localStorage.setItem('app_users', JSON.stringify(dbUsers));
-        } else {
-            // إذا كانت السحابة فارغة (أول مرة)، نضع حساب المدير الافتراضي
-            dbUsers = JSON.parse(localStorage.getItem('app_users')) || [];
-            if (dbUsers.length === 0) {
-                 dbUsers = [{ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }];
+// ================= BOOTSTRAP APP & BACKGROUND SYNC =================
+function bootApp() {
+    // 1. الدخول السريع باستخدام الذاكرة المحلية
+    verifySessionAndStart();
+
+    // 2. المزامنة المخفية في الخلفية لضمان سرعة البرنامج
+    const syncBadge = document.getElementById('sync-status');
+    syncBadge.style.display = 'flex';
+    document.getElementById('sync-text').textContent = 'جاري مزامنة السحابة...';
+
+    fetch(SCRIPT_URL)
+    .then(res => res.json())
+    .then(data => {
+        if(data.holdings) { dbHoldings = data.holdings; localStorage.setItem('local_holdings', JSON.stringify(dbHoldings)); }
+        if(data.inventory) { dbInventory = data.inventory; localStorage.setItem('local_inventory', JSON.stringify(dbInventory)); }
+        if(data.hr) { dbHr = data.hr; localStorage.setItem('local_hr', JSON.stringify(dbHr)); }
+        if(data.users && data.users.length > 0) { 
+            dbUsers = data.users; 
+            localStorage.setItem('local_users', JSON.stringify(dbUsers)); 
+        }
+
+        // تحديث حالة المستخدم في حال تم تعديلها من مدير آخر
+        if (currentUser) {
+            const stillExists = dbUsers.find(x => String(x.user) === String(currentUser.user));
+            if (!stillExists) {
+                logout(); 
+            } else {
+                currentUser = stillExists;
+                localStorage.setItem('session_user', JSON.stringify(currentUser));
+                updateAdminVisibility();
+                reRenderCurrentView();
             }
         }
-    } catch (err) {
-        console.error(err);
-        document.getElementById('loading-msg').textContent = "يعمل بدون اتصال بالإنترنت...";
-        dbUsers = JSON.parse(localStorage.getItem('app_users')) || [{ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }];
-    }
-
-    // إخفاء شاشة التحميل وفحص الدخول
-    setTimeout(() => {
-        document.getElementById('loading-view').style.display = 'none';
-        verifySessionAndStart();
-    }, 500);
+        
+        syncBadge.style.background = 'rgba(46, 125, 50, 0.9)'; // لون أخضر
+        document.getElementById('sync-text').textContent = 'متصل ومُحدّث';
+        setTimeout(() => syncBadge.style.display = 'none', 3000);
+    })
+    .catch(err => {
+        syncBadge.style.background = 'rgba(211, 47, 47, 0.9)'; // لون أحمر
+        document.getElementById('sync-text').textContent = 'أوفلاين (غير متصل)';
+        setTimeout(() => syncBadge.style.display = 'none', 4000);
+    });
 }
 
 function verifySessionAndStart() {
     const userStr = localStorage.getItem('session_user');
     if(userStr) {
-        const savedUser = JSON.parse(userStr);
-        const stillExists = dbUsers.find(x => String(x.user) === String(savedUser.user));
-        if (stillExists) {
-            currentUser = stillExists;
-            localStorage.setItem('session_user', JSON.stringify(currentUser));
-            initApp();
-            return;
-        } else {
-            localStorage.removeItem('session_user');
-        }
+        currentUser = JSON.parse(userStr);
+        initApp();
+    } else {
+        document.getElementById('login-view').style.display = 'flex';
     }
-    // إظهار شاشة الدخول فقط إذا لم يكن هناك جلسة مسجلة
-    document.getElementById('login-view').style.display = 'flex';
 }
 
 // ================= AUTH & SESSION =================
@@ -303,17 +310,13 @@ async function doChangePassLogin() {
     const pOld = document.getElementById('ch-old').value.trim();
     const pNew = document.getElementById('ch-new').value.trim();
 
-    if(!u || !pOld || !pNew) {
-        alert('يرجى تعبئة جميع الحقول'); return;
-    }
+    if(!u || !pOld || !pNew) { alert('يرجى تعبئة جميع الحقول'); return; }
 
     const idx = dbUsers.findIndex(x => x.user === u && x.pass === pOld);
-    if(idx === -1) {
-        alert('اسم المستخدم أو كلمة المرور القديمة غير صحيحة'); return;
-    }
+    if(idx === -1) { alert('اسم المستخدم أو كلمة المرور القديمة غير صحيحة'); return; }
 
     dbUsers[idx].pass = pNew;
-    localStorage.setItem('app_users', JSON.stringify(dbUsers));
+    localStorage.setItem('local_users', JSON.stringify(dbUsers)); // حفظ فوري محلي
     
     alert('تم تغيير كلمة المرور بنجاح، سيتم تحديثها بالسحابة.');
     hideChangePassLogin();
@@ -321,6 +324,7 @@ async function doChangePassLogin() {
     document.getElementById('login-user').value = u;
     document.getElementById('login-pass').value = pNew;
 
+    // رفع التعديل للسحابة بصمت
     try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المستخدمين', record: dbUsers[idx] }) }); } catch(e){}
 }
 
@@ -348,7 +352,7 @@ function updateAdminVisibility() {
     if(el.tagName === 'A' || el.classList.contains('menu-item')) {
       el.style.display = currentUser.role === 'admin' ? 'flex' : 'none';
     } else {
-      el.style.display = currentUser.role === 'admin' ? 'block' : 'none';
+      el.style.display = currentUser.role === 'admin' ? 'inline-block' : 'none';
     }
   });
 }
@@ -533,16 +537,16 @@ async function saveHolding() {
     dbHoldings[idx] = rec;
   }
   
-  closeModal(); renderHoldings(); toast('جاري الحفظ...');
-  try { 
-    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'الحيازات', record: rec }) }); 
-    toast('✓ تم الحفظ'); 
-  } catch(e) { toast('❌ تعذر الحفظ بالسحابة'); }
+  localStorage.setItem('local_holdings', JSON.stringify(dbHoldings)); // حفظ محلي فوري
+  closeModal(); renderHoldings(); toast('جاري المزامنة...');
+  
+  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'الحيازات', record: rec }) }); } catch(e){}
 }
 
 async function delHolding(id) {
   if(!confirm('هل أنت متأكد من الحذف النهائي؟')) return;
   dbHoldings = dbHoldings.filter(x => String(x.id) !== String(id));
+  localStorage.setItem('local_holdings', JSON.stringify(dbHoldings));
   renderHoldings(); toast('جاري الحذف...');
   try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'الحيازات', id: String(id) }) }); } catch(e){}
 }
@@ -667,16 +671,15 @@ async function saveInventory() {
   if(editId) { const idx = dbInventory.findIndex(x => String(x.id) === String(editId)); dbInventory[idx] = rec; }
   else { dbInventory.push(rec); }
   
+  localStorage.setItem('local_inventory', JSON.stringify(dbInventory));
   closeModal(); renderInventory(); toast('جاري الحفظ...');
-  try { 
-    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المخازن', record: rec }) }); 
-    toast('✓ تم الحفظ'); 
-  } catch(e){ toast('❌ خطأ في الإرسال'); }
+  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المخازن', record: rec }) }); } catch(e){}
 }
 
 async function delInventory(id) {
   if(!confirm('حذف الصنف نهائياً؟')) return;
   dbInventory = dbInventory.filter(x => String(x.id) !== String(id));
+  localStorage.setItem('local_inventory', JSON.stringify(dbInventory));
   renderInventory();
   try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'المخازن', id: String(id) }) }); } catch(e){}
 }
@@ -756,7 +759,7 @@ function openHrModal() {
             </div>
           `}
         </div>
-        <div class="modal-footer"><button class="btn btn-green" onclick="saveHr()">حفظ التعديلات</button></div>
+        <div class="modal-footer"><button class="btn btn-green" onclick="saveHr()">حفظ البيانات</button></div>
       </div>
     </div>`;
 }
@@ -772,13 +775,16 @@ async function saveHr() {
   if(!rec.name) return toast('الاسم مطلوب');
   dbHr.push(rec); 
   
+  localStorage.setItem('local_hr', JSON.stringify(dbHr));
   closeModal(); renderHr(currentHrTab); toast('جاري الحفظ...');
   try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'شئون_العاملين', record: rec }) }); } catch(e){}
 }
 
 async function delHr(id) { 
   if(!confirm('تأكيد الحذف؟')) return;
-  dbHr = dbHr.filter(x => String(x.id) !== String(id)); renderHr(currentHrTab); 
+  dbHr = dbHr.filter(x => String(x.id) !== String(id)); 
+  localStorage.setItem('local_hr', JSON.stringify(dbHr));
+  renderHr(currentHrTab); 
   try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'شئون_العاملين', id: String(id) }) }); } catch(e){}
 }
 
@@ -846,25 +852,20 @@ async function saveUser() {
     }
   }
   
-  localStorage.setItem('app_users', JSON.stringify(dbUsers));
-  
+  localStorage.setItem('local_users', JSON.stringify(dbUsers));
   closeModal(); renderUsers(); toast('جاري الحفظ...');
-  try { 
-    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المستخدمين', record: rec }) }); 
-    toast('✓ تم الحفظ بنجاح'); 
-  } catch(e){}
+  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المستخدمين', record: rec }) }); } catch(e){}
 }
 
 async function delUser(id) { 
   if(!confirm('حذف هذا المستخدم من النظام؟')) return;
   dbUsers = dbUsers.filter(x => String(x.id) !== String(id)); 
-  localStorage.setItem('app_users', JSON.stringify(dbUsers));
+  localStorage.setItem('local_users', JSON.stringify(dbUsers));
   renderUsers(); 
   try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'المستخدمين', id: String(id) }) }); } catch(e){}
 }
 
 // ================= BOOTSTRAP TRIGGER =================
-// بدء تشغيل التطبيق وعرض شاشة التحميل فوراً
 bootApp();
 </script>
 </body>

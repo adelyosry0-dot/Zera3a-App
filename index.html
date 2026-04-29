@@ -29,9 +29,8 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
   padding: 30px 24px; border-radius: var(--radius-lg); width: 100%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); text-align: center; 
 }
 
-/* --- تنسيق اللوجو --- */
 .login-logo { 
-  width: 100px; height: 100px; border-radius: 50%; object-fit: contain; /* object-fit: contain ليظهر اللوجو بالكامل بدون قص */
+  width: 100px; height: 100px; border-radius: 50%; object-fit: contain;
   margin: 0 auto 16px; border: 3px solid var(--primary-light); background: #fff; padding: 5px;
 }
 
@@ -116,8 +115,8 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 
 <div id="login-view">
   <div class="login-card" id="login-card-main">
-    
     <img src="https://cdn-icons-png.flaticon.com/512/10543/10543163.png" alt="Logo" class="login-logo" id="app-logo">
+    
     <div class="login-title">جمعية الناصرية الزراعية</div>
     <input type="text" id="login-user" class="login-input" placeholder="اسم المستخدم" autocomplete="off" dir="ltr">
     <input type="password" id="login-pass" class="login-input" placeholder="كلمة المرور" dir="ltr">
@@ -221,18 +220,26 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 
 <script>
 // ================= DATABASES (Local First & Cloud Sync) =================
+// ضع الرابط السحابي الخاص بك هنا إذا تم تغييره
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyChwqdSqgWMKWh4eZiXWRqBnbeXpApFLMwS5keQTd7ssFwUACqHXYAB2kyyMWwFLplcw/exec';
 
-// التحميل السريع من الذاكرة المحلية (يحل مشكلة البطء)
 let dbHoldings = JSON.parse(localStorage.getItem('local_holdings')) || [];
 let dbInventory = JSON.parse(localStorage.getItem('local_inventory')) || [];
 let dbHr = JSON.parse(localStorage.getItem('local_hr')) || [];
 let dbUsers = JSON.parse(localStorage.getItem('local_users')) || [];
 
-if(dbUsers.length === 0) {
-    dbUsers = [{ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' }];
-    localStorage.setItem('local_users', JSON.stringify(dbUsers));
+// ================= صمام الأمان (Failsafe) لضمان وجود المدير دائماً =================
+function enforceAdminFailsafe() {
+    let adminExists = dbUsers.find(u => u.user === 'admin');
+    if(!adminExists) {
+        dbUsers.push({ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' });
+        localStorage.setItem('local_users', JSON.stringify(dbUsers));
+    } else if (adminExists.role !== 'admin') {
+        adminExists.role = 'admin'; // التأكد أن صلاحيته لم تتغير
+        localStorage.setItem('local_users', JSON.stringify(dbUsers));
+    }
 }
+enforceAdminFailsafe();
 
 let currentUser = null;
 let currentInvCategory = '';
@@ -241,10 +248,8 @@ let editId = null;
 
 // ================= BOOTSTRAP APP & BACKGROUND SYNC =================
 function bootApp() {
-    // 1. الدخول السريع باستخدام الذاكرة المحلية
     verifySessionAndStart();
 
-    // 2. المزامنة المخفية في الخلفية لضمان سرعة البرنامج
     const syncBadge = document.getElementById('sync-status');
     syncBadge.style.display = 'flex';
     document.getElementById('sync-text').textContent = 'جاري مزامنة السحابة...';
@@ -257,10 +262,10 @@ function bootApp() {
         if(data.hr) { dbHr = data.hr; localStorage.setItem('local_hr', JSON.stringify(dbHr)); }
         if(data.users && data.users.length > 0) { 
             dbUsers = data.users; 
+            enforceAdminFailsafe(); // إعادة تطبيق صمام الأمان بعد التحميل من السحابة
             localStorage.setItem('local_users', JSON.stringify(dbUsers)); 
         }
 
-        // تحديث حالة المستخدم في حال تم تعديلها من مدير آخر
         if (currentUser) {
             const stillExists = dbUsers.find(x => String(x.user) === String(currentUser.user));
             if (!stillExists) {
@@ -273,12 +278,12 @@ function bootApp() {
             }
         }
         
-        syncBadge.style.background = 'rgba(46, 125, 50, 0.9)'; // لون أخضر
+        syncBadge.style.background = 'rgba(46, 125, 50, 0.9)'; 
         document.getElementById('sync-text').textContent = 'متصل ومُحدّث';
         setTimeout(() => syncBadge.style.display = 'none', 3000);
     })
     .catch(err => {
-        syncBadge.style.background = 'rgba(211, 47, 47, 0.9)'; // لون أحمر
+        syncBadge.style.background = 'rgba(211, 47, 47, 0.9)'; 
         document.getElementById('sync-text').textContent = 'أوفلاين (غير متصل)';
         setTimeout(() => syncBadge.style.display = 'none', 4000);
     });
@@ -295,7 +300,6 @@ function verifySessionAndStart() {
 }
 
 // ================= AUTH & SESSION =================
-
 function showChangePassLogin() {
     document.getElementById('login-card-main').style.display = 'none';
     document.getElementById('login-card-change').style.display = 'block';
@@ -316,7 +320,7 @@ async function doChangePassLogin() {
     if(idx === -1) { alert('اسم المستخدم أو كلمة المرور القديمة غير صحيحة'); return; }
 
     dbUsers[idx].pass = pNew;
-    localStorage.setItem('local_users', JSON.stringify(dbUsers)); // حفظ فوري محلي
+    localStorage.setItem('local_users', JSON.stringify(dbUsers)); 
     
     alert('تم تغيير كلمة المرور بنجاح، سيتم تحديثها بالسحابة.');
     hideChangePassLogin();
@@ -324,7 +328,6 @@ async function doChangePassLogin() {
     document.getElementById('login-user').value = u;
     document.getElementById('login-pass').value = pNew;
 
-    // رفع التعديل للسحابة بصمت
     try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المستخدمين', record: dbUsers[idx] }) }); } catch(e){}
 }
 
@@ -537,8 +540,8 @@ async function saveHolding() {
     dbHoldings[idx] = rec;
   }
   
-  localStorage.setItem('local_holdings', JSON.stringify(dbHoldings)); // حفظ محلي فوري
-  closeModal(); renderHoldings(); toast('جاري المزامنة...');
+  localStorage.setItem('local_holdings', JSON.stringify(dbHoldings));
+  closeModal(); renderHoldings(); toast('جاري المزامنة مع السحابة...');
   
   try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'الحيازات', record: rec }) }); } catch(e){}
 }
@@ -551,7 +554,6 @@ async function delHolding(id) {
   try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'الحيازات', id: String(id) }) }); } catch(e){}
 }
 
-// مركز البيانات (Excel)
 function openExcelModal() {
   document.getElementById('modal-root').innerHTML = `
     <div class="modal-backdrop" onclick="closeModal()">
@@ -735,7 +737,7 @@ function renderHr(tab) {
         <button class="btn-icon" style="background:var(--color-del);" onclick="delHr('${r.id}')">🗑</button>
       </div>` : ''}
     </div>
-  `).join('') || '<div class="empty-state" style="text-align:center; padding:30px; color:#999;">لا يوجد بيانات</div>';
+  `).join('') || '<div class="empty-state" style="text-align:center; padding:30px; color:#999;">لا توجد بيانات</div>';
 }
 
 function openHrModal() {
@@ -817,7 +819,7 @@ function openUserModal(id = null) {
           <div class="input-group"><label>اسم المستخدم (للدخول)</label><input type="text" id="fu-user" class="input-control" dir="ltr" value="${u.user||''}"></div>
           <div class="input-group"><label>كلمة المرور</label><input type="text" id="fu-pass" class="input-control" dir="ltr" value="${u.pass||''}"></div>
           <div class="input-group"><label>الصلاحية</label>
-            <select id="fu-role" class="input-control">
+            <select id="fu-role" class="input-control" ${u.user === 'admin' ? 'disabled' : ''}>
               <option value="user" ${u.role==='user'?'selected':''}>موظف (إدخال حيازات فقط)</option>
               <option value="admin" ${u.role==='admin'?'selected':''}>مدير (صلاحيات كاملة)</option>
             </select>

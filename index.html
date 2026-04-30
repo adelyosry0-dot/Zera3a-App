@@ -18,9 +18,21 @@
 }
 html, body { height: 100%; background: var(--bg-page); color: var(--text-main); overflow-x: hidden; }
 
+/* ================= LOADING SCREEN ================= */
+#loading-view {
+  position: fixed; inset: 0; background: var(--primary); z-index: 10000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;
+}
+.spinner {
+  width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-top-color: white; 
+  border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
+
 /* ================= LOGIN SCREEN ================= */
 #login-view { 
-  display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; 
+  display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; 
   background: linear-gradient(rgba(20, 70, 30, 0.8), rgba(46, 125, 50, 0.8)), url('https://images.unsplash.com/photo-1590682680695-43b964a3ae17?q=80&w=1080&auto=format&fit=crop') center/cover no-repeat;
   padding: 20px; z-index: 9999; position: fixed; inset: 0; 
 }
@@ -28,10 +40,7 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
   background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
   padding: 30px 24px; border-radius: var(--radius-lg); width: 100%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); text-align: center; 
 }
-.login-logo { 
-  width: 100px; height: 100px; border-radius: 50%; object-fit: contain;
-  margin: 0 auto 16px; border: 3px solid var(--primary-light); background: #fff; padding: 5px;
-}
+.login-logo { width: 100px; height: 100px; border-radius: 50%; object-fit: contain; margin: 0 auto 16px; border: 3px solid var(--primary-light); background: #fff; padding: 5px; }
 .login-title { font-size: 24px; font-weight: 700; color: var(--primary); margin-bottom: 24px; text-shadow: 0px 1px 2px rgba(0,0,0,0.1); }
 .login-input { width: 100%; border: 1.5px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px; font-size: 15px; margin-bottom: 16px; background: #fff; outline: none; }
 .login-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
@@ -87,7 +96,7 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 .modal-body { padding: 16px; }
 .modal-footer { padding: 16px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; }
 
-/* Toast & Utility */
+/* Toast & FAB */
 .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #323232; color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 13px; z-index: 9999; }
 .fab { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 30px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(46,125,50,0.4); cursor: pointer; z-index: 100; transition: 0.2s; }
 .fab:active { transform: translateX(-50%) scale(0.95); }
@@ -99,6 +108,11 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 
 <div id="sync-status" class="sync-badge" style="display:none;">
   <div class="sync-dot"></div> <span id="sync-text">جاري المزامنة...</span>
+</div>
+
+<div id="loading-view">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-msg">جاري تحميل البيانات...</div>
 </div>
 
 <div id="login-view">
@@ -154,7 +168,7 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 
   <div id="view-holdings" class="view-section active">
     <div style="display:flex; gap:8px; margin-bottom:12px;">
-      <input type="search" id="h-search" class="input-control" placeholder="بحث شامل (الاسم، الرقم، الحوض)..." oninput="renderHoldings()">
+      <input type="search" id="h-search" class="input-control" placeholder="بحث شامل (الاسم، الرقم، الحوض، القومي)..." oninput="renderHoldings()">
     </div>
     <div class="stats-box flex-between" style="padding:10px;">
       <div><div style="font-size:20px;font-weight:bold;color:var(--primary)" id="h-count">0</div><div style="font-size:11px">إجمالي الحيازات</div></div>
@@ -203,7 +217,10 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 </div>
 
 <div id="modal-root"></div>
+
+<!-- المدخلات المخفية للـ Excel -->
 <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)" style="display:none" />
+<input type="file" id="sync-nid-input" accept=".xlsx,.xls" onchange="handleNidSync(event)" style="display:none" />
 
 <script>
 // ================= DATABASES (Local First & Cloud Sync) =================
@@ -232,16 +249,11 @@ let currentHrTab = 'employee';
 let editId = null;
 
 // ================= BOOTSTRAP APP & BACKGROUND SYNC =================
-function bootApp() {
-    verifySessionAndStart();
-
-    const syncBadge = document.getElementById('sync-status');
-    syncBadge.style.display = 'flex';
-    document.getElementById('sync-text').textContent = 'جاري مزامنة السحابة...';
-
-    fetch(SCRIPT_URL)
-    .then(res => res.json())
-    .then(data => {
+async function bootApp() {
+    try {
+        const res = await fetch(SCRIPT_URL);
+        const data = await res.json();
+        
         if(data.holdings) { dbHoldings = data.holdings; localStorage.setItem('local_holdings', JSON.stringify(dbHoldings)); }
         if(data.inventory) { dbInventory = data.inventory; localStorage.setItem('local_inventory', JSON.stringify(dbInventory)); }
         if(data.hr) { dbHr = data.hr; localStorage.setItem('local_hr', JSON.stringify(dbHr)); }
@@ -250,38 +262,31 @@ function bootApp() {
             enforceAdminFailsafe(); 
             localStorage.setItem('local_users', JSON.stringify(dbUsers)); 
         }
+    } catch (err) {
+        document.getElementById('loading-msg').textContent = "يعمل بدون اتصال بالإنترنت...";
+    }
 
-        if (currentUser) {
-            const stillExists = dbUsers.find(x => String(x.user) === String(currentUser.user));
-            if (!stillExists) {
-                logout(); 
-            } else {
-                currentUser = stillExists;
-                localStorage.setItem('session_user', JSON.stringify(currentUser));
-                updateAdminVisibility();
-                reRenderCurrentView();
-            }
-        }
-        
-        syncBadge.style.background = 'rgba(46, 125, 50, 0.9)'; 
-        document.getElementById('sync-text').textContent = 'متصل ومُحدّث';
-        setTimeout(() => syncBadge.style.display = 'none', 3000);
-    })
-    .catch(err => {
-        syncBadge.style.background = 'rgba(211, 47, 47, 0.9)'; 
-        document.getElementById('sync-text').textContent = 'أوفلاين (غير متصل)';
-        setTimeout(() => syncBadge.style.display = 'none', 4000);
-    });
+    setTimeout(() => {
+        document.getElementById('loading-view').style.display = 'none';
+        verifySessionAndStart();
+    }, 500);
 }
 
 function verifySessionAndStart() {
     const userStr = localStorage.getItem('session_user');
     if(userStr) {
-        currentUser = JSON.parse(userStr);
-        initApp();
-    } else {
-        document.getElementById('login-view').style.display = 'flex';
+        const savedUser = JSON.parse(userStr);
+        const stillExists = dbUsers.find(x => String(x.user) === String(savedUser.user) && String(x.pass) === String(savedUser.pass));
+        if (stillExists) {
+            currentUser = stillExists;
+            localStorage.setItem('session_user', JSON.stringify(currentUser));
+            initApp();
+            return;
+        } else {
+            localStorage.removeItem('session_user');
+        }
     }
+    document.getElementById('login-view').style.display = 'flex';
 }
 
 // ================= AUTH & SESSION =================
@@ -294,7 +299,6 @@ function hideChangePassLogin() {
     document.getElementById('login-card-change').style.display = 'none';
 }
 
-// تغيير الباسورد الخارجي
 async function doChangePassLogin() {
     const u = document.getElementById('ch-user').value.trim();
     const pOld = document.getElementById('ch-old').value.trim();
@@ -302,7 +306,6 @@ async function doChangePassLogin() {
 
     if(!u || !pOld || !pNew) { alert('يرجى تعبئة جميع الحقول'); return; }
 
-    // هنا يتم تحويل القيم إلى String حتى لو كانت أرقام في الشيت
     const idx = dbUsers.findIndex(x => String(x.user) === u && String(x.pass) === pOld);
     if(idx === -1) { alert('اسم المستخدم أو كلمة المرور القديمة غير صحيحة'); return; }
 
@@ -318,12 +321,10 @@ async function doChangePassLogin() {
     try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المستخدمين', record: dbUsers[idx] }) }); } catch(e){}
 }
 
-// تسجيل الدخول
 function attemptLogin() {
   const u = document.getElementById('login-user').value.trim();
   const p = document.getElementById('login-pass').value.trim();
   
-  // تحويل القيم إلى String للتأكد من مطابقتها في كل الحالات
   const found = dbUsers.find(x => String(x.user) === u && String(x.pass) === p);
   
   if(found) {
@@ -381,11 +382,8 @@ function switchView(viewName, param = '') {
   document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
   
-  if(param) {
-    document.querySelector(`.menu-item[onclick*="${param}"]`)?.classList.add('active');
-  } else {
-    document.querySelector(`.menu-item[onclick*="${viewName}"]`)?.classList.add('active');
-  }
+  if(param) { document.querySelector(`.menu-item[onclick*="${param}"]`)?.classList.add('active'); } 
+  else { document.querySelector(`.menu-item[onclick*="${viewName}"]`)?.classList.add('active'); }
 
   const titleEl = document.getElementById('app-title');
   const actionsEl = document.getElementById('header-actions');
@@ -395,7 +393,7 @@ function switchView(viewName, param = '') {
     titleEl.textContent = 'قسم الحيازات';
     actionsEl.innerHTML = `
       <button class="btn-icon" onclick="printHoldings()" title="طباعة">🖨️</button>
-      <button class="btn-icon" onclick="openExcelModal()" title="إكسيل">📊</button>
+      <button class="btn-icon" onclick="openExcelModal()" title="إكسيل والمزامنة">📊</button>
     `;
     renderHoldings();
   } 
@@ -569,25 +567,24 @@ async function delHolding(id) {
   try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'الحيازات', id: String(id) }) }); } catch(e){}
 }
 
+// ================= EXCEL & SMART NID SYNC =================
 function openExcelModal() {
   document.getElementById('modal-root').innerHTML = `
     <div class="modal-backdrop" onclick="closeModal()">
       <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header"><span>مركز البيانات (إكسيل)</span><span style="cursor:pointer; padding:5px;" onclick="closeModal()">✕</span></div>
+        <div class="modal-header"><span>البيانات والمزامنة (إكسيل)</span><span style="cursor:pointer; padding:5px;" onclick="closeModal()">✕</span></div>
         <div class="modal-body" style="text-align:center;">
-          <button class="btn btn-blue" style="width:100%; margin-bottom:10px; padding:15px;" onclick="document.getElementById('file-input').click()">📥 استيراد من ملف إكسيل</button>
+          <button class="btn btn-blue" style="width:100%; margin-bottom:10px; padding:15px;" onclick="document.getElementById('file-input').click()">📥 استيراد حيازات جديدة</button>
           <button class="btn btn-green" style="width:100%; margin-bottom:10px; padding:15px;" onclick="exportAllHoldings()">📤 تصدير كل الحيازات</button>
-          <button class="btn btn-gray" style="width:100%; padding:15px;" onclick="downloadTemplate()">📄 تحميل نموذج فارغ</button>
+          
+          <div style="margin-top:20px; border-top:1px solid var(--border-color); padding-top:15px;">
+             <h4 style="margin-bottom:10px; color:var(--primary);">مزامنة الأرقام القومية من شيت خارجي</h4>
+             <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">سيقوم النظام بالبحث عن تطابق (3 كلمات على الأقل) بين الأسماء، وسحب الرقم القومي تلقائياً.</p>
+             <button class="btn" style="background:#FF9800; width:100%; padding:15px;" onclick="document.getElementById('sync-nid-input').click()">🔄 اختيار شيت المزامنة</button>
+          </div>
         </div>
       </div>
     </div>`;
-}
-
-function downloadTemplate() {
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet([['رقم الحيازة','اسم الحائز','الرقم القومي','اسم الحوض','فدان','قيراط','سهم'], ['1','محمد أحمد','12345678901234','حوض أ',1,0,0]]);
-  XLSX.utils.book_append_sheet(wb, ws, 'الحيازات');
-  XLSX.writeFile(wb, 'نموذج_الحيازات.xlsx');
 }
 
 function exportAllHoldings() {
@@ -608,6 +605,144 @@ function handleFileSelect(e) {
     toast(`تم قراءة ${rows.length-1} صف، سيتم رفعهم للسحابة قريباً`);
   };
   reader.readAsArrayBuffer(f);
+}
+
+let pendingNidUpdates = [];
+
+// دالة تفكيك الاسم إلى كلمات لمقارنتها
+function getWordMatches(name1, name2) {
+    const words1 = name1.split(' ').filter(w => w.length > 2); // استبعاد الكلمات القصيرة جداً مثل "بن"
+    const words2 = name2.split(' ');
+    let matchCount = 0;
+    words1.forEach(w => {
+        if(words2.includes(w)) matchCount++;
+    });
+    return matchCount;
+}
+
+function handleNidSync(e) {
+  const f = e.target.files[0]; if(!f) return; e.target.value='';
+  toast('جاري تحليل الشيت ومطابقة الأسماء الثلاثية...');
+  
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:''});
+    
+    if(rows.length < 2) return toast('الشيت فارغ');
+    
+    const headers = rows[0].map(h => String(h).trim().toLowerCase());
+    
+    let nameIdx = -1, nidIdx = -1;
+    const nameAliases = ['الاسم', 'اسم الحائز', 'اسم', 'name'];
+    const nidAliases = ['الرقم القومي', 'القومي', 'رقم قومي', 'رقم البطاقة', 'national id'];
+
+    for(let i=0; i<headers.length; i++) {
+        if(nameAliases.includes(headers[i])) nameIdx = i;
+        if(nidAliases.includes(headers[i])) nidIdx = i;
+    }
+
+    if(nameIdx === -1 || nidIdx === -1) {
+        return alert('لم يتم العثور على عمود "الاسم" أو "الرقم القومي" بشكل واضح في الصف الأول. يرجى تعديل أسماء الأعمدة في الإكسيل.');
+    }
+
+    pendingNidUpdates = [];
+    
+    // عملية المطابقة الذكية (3 كلمات فأكثر)
+    for(let i=1; i<rows.length; i++) {
+        const excelNameRaw = String(rows[i][nameIdx]).trim();
+        const excelNidRaw = String(rows[i][nidIdx]).trim();
+        
+        if(!excelNameRaw || !excelNidRaw) continue;
+        
+        const normExcelName = normalizeArabic(excelNameRaw);
+        
+        for(let j=0; j<dbHoldings.length; j++) {
+            const h = dbHoldings[j];
+            const normAppName = normalizeArabic(h.name);
+            
+            // المطابقة: يجب أن تتطابق 3 كلمات على الأقل بين الاسمين
+            const matches = getWordMatches(normAppName, normExcelName);
+            
+            if(matches >= 3) {
+                if(h.nationalId !== excelNidRaw) {
+                    pendingNidUpdates.push({
+                        id: h.id,
+                        oldName: h.name,
+                        excelName: excelNameRaw,
+                        newNid: excelNidRaw
+                    });
+                }
+                break; 
+            }
+        }
+    }
+    
+    showNidSyncConfirmation();
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+function showNidSyncConfirmation() {
+    if(pendingNidUpdates.length === 0) {
+        alert('لم يتم العثور على أسماء (ثلاثية) متطابقة تحتاج لتحديث الرقم القومي.');
+        return;
+    }
+
+    let previewList = pendingNidUpdates.slice(0, 20).map(u => 
+        `<div style="font-size:12px; border-bottom:1px solid #eee; padding:5px 0; text-align:right;">
+            <b>برنامج:</b> ${u.oldName} <br>
+            <b>إكسيل:</b> <span style="color:var(--primary)">${u.excelName}</span> <br>
+            <b>القومي:</b> ${u.newNid}
+        </div>`
+    ).join('');
+
+    document.getElementById('modal-root').innerHTML = `
+    <div class="modal-backdrop" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header"><span>تأكيد مزامنة الأرقام القومية</span><span style="cursor:pointer;" onclick="closeModal()">✕</span></div>
+        <div class="modal-body">
+          <div style="background:var(--primary-light); color:var(--primary); padding:10px; border-radius:8px; text-align:center; font-weight:bold; margin-bottom:15px;">
+             تم العثور على ${pendingNidUpdates.length} تطابق (ثلاثي)!
+          </div>
+          <div style="max-height:200px; overflow-y:auto; background:#f9f9f9; padding:10px; border:1px solid #ddd; border-radius:5px;">
+             ${previewList}
+             ${pendingNidUpdates.length > 20 ? `<div style="text-align:center; color:#888; margin-top:5px;">...وغيرها</div>` : ''}
+          </div>
+          <p style="font-size:12px; color:var(--color-del); margin-top:10px;">سيتم تحديث الرقم القومي لهذه الأسماء. هل توافق؟</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-gray" onclick="closeModal()">إلغاء</button>
+          <button class="btn btn-green" onclick="confirmNidSync()">نعم، تحديث الأرقام</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function confirmNidSync() {
+    closeModal();
+    toast('جاري تحديث الحيازات...');
+    
+    pendingNidUpdates.forEach(update => {
+        const idx = dbHoldings.findIndex(h => h.id === update.id);
+        if(idx !== -1) {
+            dbHoldings[idx].nationalId = update.newNid;
+        }
+    });
+    
+    localStorage.setItem('local_holdings', JSON.stringify(dbHoldings));
+    renderHoldings();
+    
+    let successCount = 0;
+    for(const update of pendingNidUpdates) {
+        const record = dbHoldings.find(h => h.id === update.id);
+        try { 
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'الحيازات', record: record }) }); 
+            successCount++;
+        } catch(e) {}
+    }
+    
+    toast(`تم تحديث ${successCount} سجل بنجاح!`);
 }
 
 function printHoldings() {
@@ -643,7 +778,7 @@ function renderInventory() {
   
   document.getElementById('inv-total-items').textContent = list.length;
   document.getElementById('inv-total-value').textContent = totalVal.toFixed(2);
-  document.getElementById('inventory-list').innerHTML = html || '<div class="empty-state">المخزن فارغ</div>';
+  document.getElementById('inventory-list').innerHTML = html || '<div class="empty-state" style="text-align:center; padding:30px; color:#999;">المخزن فارغ</div>';
 }
 
 function openInventoryModal(id = null) {
@@ -752,7 +887,7 @@ function renderHr(tab) {
         <button class="btn-icon" style="background:var(--color-del);" onclick="delHr('${r.id}')">🗑</button>
       </div>` : ''}
     </div>
-  `).join('') || '<div class="empty-state" style="text-align:center; padding:30px; color:#999;">لا توجد بيانات</div>';
+  `).join('') || '<div class="empty-state" style="text-align:center; padding:30px; color:#999;">لا يوجد بيانات</div>';
 }
 
 function openHrModal() {
@@ -846,7 +981,6 @@ function openUserModal(id = null) {
 }
 
 async function saveUser() {
-  // استخدام String في كل مكان لتجنب أخطاء الأرقام
   const rec = {
     id: editId || String(Date.now()),
     name: String(document.getElementById('fu-name').value).trim(),
@@ -858,7 +992,7 @@ async function saveUser() {
   if(!rec.user || !rec.pass) return toast('بيانات الدخول مطلوبة');
   
   if(!editId) {
-    if(dbUsers.find(x => String(x.user) === rec.user)) return toast('اسم المستخدم موجود مسبقاً');
+    if(dbUsers.find(x => x.user === rec.user)) return toast('اسم المستخدم موجود مسبقاً');
     dbUsers.push(rec); 
   } else {
     const idx = dbUsers.findIndex(x => String(x.id) === String(editId));

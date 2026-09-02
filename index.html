@@ -266,7 +266,9 @@ async function attemptLogin() {
     btn.textContent = "تسجيل الدخول";
   } catch (error) {
     errEl.style.display = 'block';
-    errEl.textContent = "البيانات غير صحيحة!";
+    // التعديل هنا: إظهار رسالة الخطأ الحقيقية القادمة من فايربيز
+    errEl.textContent = "السبب: " + error.message;
+    console.error("Firebase Auth Error:", error);
     btn.textContent = "تسجيل الدخول";
   }
 }

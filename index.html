@@ -5,7 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#2E7D32">
 <title>جمعية الناصرية الزراعية</title>
+<!-- مكتبة تصدير الإكسيل -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+
+<!-- مكتبات Firebase الأساسية -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
 <style>
 /* ================= CSS RESET & VARIABLES ================= */
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
@@ -47,14 +54,6 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 .btn-login { width: 100%; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; }
 .btn-login:active { transform: scale(0.98); background: var(--secondary); }
 .login-error { color: var(--color-del); font-size: 13px; margin-top: 10px; display: none; font-weight: bold; }
-.link-btn { margin-top: 15px; cursor: pointer; color: var(--primary); font-size: 14px; font-weight: bold; text-decoration: underline; }
-
-/* ================= SYNC INDICATOR ================= */
-.sync-badge {
-  position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 20px; font-size: 11px; z-index: 10000; display: flex; align-items: center; gap: 5px;
-}
-.sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #FFC107; animation: blink 1s infinite alternate; }
-@keyframes blink { 50% { opacity: 0.5; } }
 
 /* ================= APP LAYOUT ================= */
 #app-view { display: none; height: 100vh; flex-direction: column; max-width: 600px; margin: 0 auto; background: var(--bg-page); position: relative; }
@@ -106,34 +105,19 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 </head>
 <body>
 
-<div id="sync-status" class="sync-badge" style="display:none;">
-  <div class="sync-dot"></div> <span id="sync-text">جاري المزامنة...</span>
-</div>
-
 <div id="loading-view">
   <div class="spinner"></div>
-  <div class="loading-text" id="loading-msg">جاري تحميل البيانات...</div>
+  <div class="loading-text" id="loading-msg">جاري التحميل من السيرفر...</div>
 </div>
 
 <div id="login-view">
   <div class="login-card" id="login-card-main">
     <img src="https://cdn-icons-png.flaticon.com/512/10543/10543163.png" alt="Logo" class="login-logo" id="app-logo">
-    <div class="login-title">جمعية الناصرية الزراعية</div>
-    <input type="text" id="login-user" class="login-input" placeholder="اسم المستخدم" autocomplete="off" dir="ltr">
+    <div class="login-title">الناصرية الزراعية</div>
+    <input type="email" id="login-user" class="login-input" placeholder="البريد الإلكتروني" autocomplete="off" dir="ltr">
     <input type="password" id="login-pass" class="login-input" placeholder="كلمة المرور" dir="ltr">
-    <button class="btn-login" onclick="attemptLogin()">تسجيل الدخول</button>
+    <button class="btn-login" id="btn-login" onclick="attemptLogin()">تسجيل الدخول</button>
     <div id="login-err" class="login-error">البيانات غير صحيحة!</div>
-    <div class="link-btn" onclick="showChangePassLogin()">🔄 تغيير كلمة المرور للمستخدم؟</div>
-  </div>
-
-  <div class="login-card" id="login-card-change" style="display:none;">
-    <img src="https://cdn-icons-png.flaticon.com/512/10543/10543163.png" alt="Logo" class="login-logo" style="width:70px; height:70px;">
-    <div class="login-title" style="font-size:18px;">تغيير كلمة المرور</div>
-    <input type="text" id="ch-user" class="login-input" placeholder="اسم المستخدم" autocomplete="off" dir="ltr">
-    <input type="password" id="ch-old" class="login-input" placeholder="كلمة المرور القديمة" dir="ltr">
-    <input type="text" id="ch-new" class="login-input" placeholder="كلمة المرور الجديدة" dir="ltr">
-    <button class="btn-login" style="background:var(--color-edit); margin-bottom:10px;" onclick="doChangePassLogin()">حفظ وتحديث</button>
-    <button class="btn-login" style="background:#aaa;" onclick="hideChangePassLogin()">رجوع للخلف</button>
   </div>
 </div>
 
@@ -151,7 +135,6 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
       <a class="menu-item" onclick="switchView('inventory', 'مغذيات')"><span class="menu-icon">🌱</span> قسم المغذيات</a>
       <a class="menu-item admin-only" onclick="switchView('treasury')"><span class="menu-icon">💰</span> الخزينة والحسابات</a>
       <a class="menu-item admin-only" onclick="switchView('hr')"><span class="menu-icon">👥</span> شئون العاملين</a>
-      <a class="menu-item admin-only" onclick="switchView('settings')"><span class="menu-icon">⚙️</span> إعدادات المستخدمين</a>
     </div>
     <button class="btn-logout" onclick="logout()">🚪 تسجيل الخروج</button>
   </div>
@@ -183,7 +166,7 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
       <h3 id="inv-title" style="margin-bottom:10px;">المخزن</h3>
       <div class="flex-between">
         <div><b id="inv-total-items">0</b><br><small>عدد الأصناف</small></div>
-        <div><b id="inv-total-value">0</b> ج<br><small>قيمة البضاعة (شراء)</small></div>
+        <div><b id="inv-total-value">0</b> ج<br><small>قيمة البضاعة</small></div>
       </div>
     </div>
     <div id="inventory-list"></div>
@@ -192,7 +175,7 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
 
   <div id="view-treasury" class="view-section">
     <div class="stats-box" style="background:#FFF3E0; border-color:#FF9800;">
-      <h2 style="color:#E65100; margin-bottom:5px;">النقدية بالخزينة</h2>
+      <h2 style="color:#E65100; margin-bottom:5px;">إجمالي المبيعات النقدية</h2>
       <div style="font-size:28px; font-weight:bold; color:#E65100;" id="treasury-total">0 ج.م</div>
     </div>
     <h3 style="margin-bottom:10px;">ملخص حسابات الأقسام:</h3>
@@ -208,171 +191,121 @@ html, body { height: 100%; background: var(--bg-page); color: var(--text-main); 
     <button class="fab admin-only" onclick="openHrModal()">➕ إضافة عضو/موظف</button>
   </div>
 
-  <div id="view-settings" class="view-section">
-    <h3 style="margin-bottom:15px;">إدارة مستخدمي النظام</h3>
-    <div id="users-list"></div>
-    <button class="fab" onclick="openUserModal()">➕ مستخدم جديد</button>
-  </div>
-
 </div>
 
 <div id="modal-root"></div>
-
-<!-- المدخلات المخفية للـ Excel -->
+<!-- مدخلات الإكسيل -->
 <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)" style="display:none" />
 <input type="file" id="sync-nid-input" accept=".xlsx,.xls" onchange="handleNidSync(event)" style="display:none" />
 
 <script>
-// ================= DATABASES (Local First & Cloud Sync) =================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyChwqdSqgWMKWh4eZiXWRqBnbeXpApFLMwS5keQTd7ssFwUACqHXYAB2kyyMWwFLplcw/exec';
+// ================= 1. FIREBASE CONFIGURATION =================
+const firebaseConfig = {
+  apiKey: "AIzaSyDPbhQU45DMpaL7V2jFga_mZrltd7LkN24",
+  authDomain: "nasriya-agri-app.firebaseapp.com",
+  projectId: "nasriya-agri-app",
+  storageBucket: "nasriya-agri-app.firebasestorage.app",
+  messagingSenderId: "116458006356",
+  appId: "1:116458006356:web:43c53ec849462f774f4ac1"
+};
 
-let dbHoldings = JSON.parse(localStorage.getItem('local_holdings')) || [];
-let dbInventory = JSON.parse(localStorage.getItem('local_inventory')) || [];
-let dbHr = JSON.parse(localStorage.getItem('local_hr')) || [];
-let dbUsers = JSON.parse(localStorage.getItem('local_users')) || [];
+// تهيئة المشروع
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-function enforceAdminFailsafe() {
-    let adminExists = dbUsers.find(u => String(u.user) === 'admin');
-    if(!adminExists) {
-        dbUsers.push({ id: 1, user: 'admin', pass: 'admin123', role: 'admin', name: 'المدير العام' });
-        localStorage.setItem('local_users', JSON.stringify(dbUsers));
-    } else if (adminExists.role !== 'admin') {
-        adminExists.role = 'admin'; 
-        localStorage.setItem('local_users', JSON.stringify(dbUsers));
-    }
-}
-enforceAdminFailsafe();
+// تفعيل وضع عدم الاتصال (Offline Persistence)
+db.enablePersistence().catch(function(err) {
+    console.log("Offline mode error:", err.code);
+});
 
+// متغيرات التطبيق الأساسية
+let dbHoldings = [];
+let dbInventory = [];
+let dbHr = [];
 let currentUser = null;
 let currentInvCategory = '';
 let currentHrTab = 'employee';
 let editId = null;
 
-// ================= BOOTSTRAP APP & BACKGROUND SYNC =================
-async function bootApp() {
-    try {
-        const res = await fetch(SCRIPT_URL);
-        const data = await res.json();
-        
-        if(data.holdings) { dbHoldings = data.holdings; localStorage.setItem('local_holdings', JSON.stringify(dbHoldings)); }
-        if(data.inventory) { dbInventory = data.inventory; localStorage.setItem('local_inventory', JSON.stringify(dbInventory)); }
-        if(data.hr) { dbHr = data.hr; localStorage.setItem('local_hr', JSON.stringify(dbHr)); }
-        if(data.users && data.users.length > 0) { 
-            dbUsers = data.users; 
-            enforceAdminFailsafe(); 
-            localStorage.setItem('local_users', JSON.stringify(dbUsers)); 
-        }
-    } catch (err) {
-        document.getElementById('loading-msg').textContent = "يعمل بدون اتصال بالإنترنت...";
-    }
+// ================= 2. AUTHENTICATION & BOOT =================
 
-    setTimeout(() => {
-        document.getElementById('loading-view').style.display = 'none';
-        verifySessionAndStart();
-    }, 500);
-}
-
-function verifySessionAndStart() {
-    const userStr = localStorage.getItem('session_user');
-    if(userStr) {
-        const savedUser = JSON.parse(userStr);
-        const stillExists = dbUsers.find(x => String(x.user) === String(savedUser.user) && String(x.pass) === String(savedUser.pass));
-        if (stillExists) {
-            currentUser = stillExists;
-            localStorage.setItem('session_user', JSON.stringify(currentUser));
-            initApp();
-            return;
-        } else {
-            localStorage.removeItem('session_user');
-        }
-    }
+// الاستماع اللحظي لحالة تسجيل الدخول
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    // تم تسجيل الدخول
+    currentUser = { email: user.email, role: 'admin', name: 'مدير النظام' }; // كافتراضي نعتبره مدير حالياً
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('app-view').style.display = 'flex';
+    document.getElementById('sidebar-role-text').textContent = currentUser.name;
+    
+    updateAdminVisibility();
+    setupRealtimeListeners(); // تشغيل جلب البيانات اللحظي
+    switchView('holdings'); // فتح الشاشة الرئيسية
+  } else {
+    // لم يتم تسجيل الدخول
+    document.getElementById('loading-view').style.display = 'none';
+    document.getElementById('app-view').style.display = 'none';
     document.getElementById('login-view').style.display = 'flex';
-}
+  }
+});
 
-// ================= AUTH & SESSION =================
-function showChangePassLogin() {
-    document.getElementById('login-card-main').style.display = 'none';
-    document.getElementById('login-card-change').style.display = 'block';
-}
-function hideChangePassLogin() {
-    document.getElementById('login-card-main').style.display = 'block';
-    document.getElementById('login-card-change').style.display = 'none';
-}
-
-async function doChangePassLogin() {
-    const u = document.getElementById('ch-user').value.trim();
-    const pOld = document.getElementById('ch-old').value.trim();
-    const pNew = document.getElementById('ch-new').value.trim();
-
-    if(!u || !pOld || !pNew) { alert('يرجى تعبئة جميع الحقول'); return; }
-
-    const idx = dbUsers.findIndex(x => String(x.user) === u && String(x.pass) === pOld);
-    if(idx === -1) { alert('اسم المستخدم أو كلمة المرور القديمة غير صحيحة'); return; }
-
-    dbUsers[idx].pass = pNew;
-    localStorage.setItem('local_users', JSON.stringify(dbUsers)); 
-    
-    alert('تم تغيير كلمة المرور بنجاح، سيتم تحديثها بالسحابة.');
-    hideChangePassLogin();
-    
-    document.getElementById('login-user').value = u;
-    document.getElementById('login-pass').value = pNew;
-
-    try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المستخدمين', record: dbUsers[idx] }) }); } catch(e){}
-}
-
-function attemptLogin() {
+async function attemptLogin() {
   const u = document.getElementById('login-user').value.trim();
   const p = document.getElementById('login-pass').value.trim();
+  const errEl = document.getElementById('login-err');
+  const btn = document.getElementById('btn-login');
+
+  if (!u || !p) { errEl.style.display = 'block'; errEl.textContent = "يرجى تعبئة البيانات"; return; }
   
-  const found = dbUsers.find(x => String(x.user) === u && String(x.pass) === p);
-  
-  if(found) {
-    currentUser = found;
-    localStorage.setItem('session_user', JSON.stringify(found));
-    initApp();
-  } else {
-    document.getElementById('login-err').style.display = 'block';
+  btn.textContent = "جاري التحقق...";
+  errEl.style.display = 'none';
+
+  try {
+    await auth.signInWithEmailAndPassword(u, p);
+    btn.textContent = "تسجيل الدخول";
+  } catch (error) {
+    errEl.style.display = 'block';
+    errEl.textContent = "البيانات غير صحيحة!";
+    btn.textContent = "تسجيل الدخول";
   }
 }
 
 function logout() {
-  localStorage.removeItem('session_user');
-  location.reload();
+  auth.signOut().then(() => {
+    location.reload();
+  });
 }
 
 function updateAdminVisibility() {
   document.querySelectorAll('.admin-only').forEach(el => {
-    if(el.tagName === 'A' || el.classList.contains('menu-item')) {
-      el.style.display = currentUser.role === 'admin' ? 'flex' : 'none';
-    } else {
-      el.style.display = currentUser.role === 'admin' ? 'inline-block' : 'none';
-    }
+    el.style.display = currentUser.role === 'admin' ? (el.tagName === 'A' ? 'flex' : 'inline-block') : 'none';
   });
 }
 
-function initApp() {
-  document.getElementById('login-view').style.display = 'none';
-  document.getElementById('app-view').style.display = 'flex';
-  document.getElementById('sidebar-role-text').textContent = currentUser.name + (currentUser.role === 'admin' ? ' (مدير)' : ' (موظف)');
-  
-  updateAdminVisibility();
-  
-  const activeView = document.querySelector('.view-section.active');
-  if(!activeView || activeView.id === 'view-holdings') switchView('holdings');
-  else reRenderCurrentView();
+// ================= 3. REALTIME DATABASE LISTENERS =================
+function setupRealtimeListeners() {
+  // استماع الحيازات
+  db.collection("holdings").onSnapshot(snapshot => {
+    dbHoldings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if(document.getElementById('view-holdings').classList.contains('active')) renderHoldings();
+    document.getElementById('loading-view').style.display = 'none'; // إخفاء التحميل
+  });
+
+  // استماع المخازن
+  db.collection("inventory").onSnapshot(snapshot => {
+    dbInventory = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if(document.getElementById('view-inventory').classList.contains('active')) renderInventory();
+  });
+
+  // استماع شئون العاملين
+  db.collection("hr").onSnapshot(snapshot => {
+    dbHr = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if(document.getElementById('view-hr').classList.contains('active')) renderHr(currentHrTab);
+  });
 }
 
-function reRenderCurrentView() {
-  const activeId = document.querySelector('.view-section.active').id;
-  if(activeId === 'view-holdings') renderHoldings();
-  else if(activeId === 'view-inventory') renderInventory();
-  else if(activeId === 'view-treasury') renderTreasury();
-  else if(activeId === 'view-hr') renderHr(currentHrTab);
-  else if(activeId === 'view-settings') renderUsers();
-}
-
-// ================= UI ROUTING =================
+// ================= 4. UI ROUTING & UTILS =================
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('active');
   document.getElementById('sidebar-overlay').classList.toggle('active');
@@ -381,13 +314,13 @@ function toggleSidebar() {
 function switchView(viewName, param = '') {
   document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-  
+
   if(param) { document.querySelector(`.menu-item[onclick*="${param}"]`)?.classList.add('active'); } 
   else { document.querySelector(`.menu-item[onclick*="${viewName}"]`)?.classList.add('active'); }
 
   const titleEl = document.getElementById('app-title');
   const actionsEl = document.getElementById('header-actions');
-  
+
   if(viewName === 'holdings') {
     document.getElementById('view-holdings').classList.add('active');
     titleEl.textContent = 'قسم الحيازات';
@@ -417,57 +350,35 @@ function switchView(viewName, param = '') {
     actionsEl.innerHTML = '';
     renderHr(currentHrTab);
   }
-  else if(viewName === 'settings') {
-    document.getElementById('view-settings').classList.add('active');
-    titleEl.textContent = 'إعدادات النظام';
-    actionsEl.innerHTML = '';
-    renderUsers();
-  }
-  
+
   if(document.getElementById('sidebar').classList.contains('active')) toggleSidebar();
 }
 
-// ================= UTILS & ARABIC NORMALIZATION =================
 function toast(msg) {
   const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
   document.body.appendChild(t); setTimeout(() => t.remove(), 2500);
 }
 function closeModal() { document.getElementById('modal-root').innerHTML = ''; editId = null; }
 function areaToFeddan(f,q,s){ return (parseFloat(f)||0)+(parseFloat(q)||0)/24+(parseFloat(s)||0)/576; }
-
 function normalizeArabic(text) {
   if (!text) return '';
-  return text.toString().toLowerCase()
-    .replace(/[أإآ]/g, 'ا')
-    .replace(/ة/g, 'ه')
-    .replace(/ى/g, 'ي')
-    .replace(/عبد\s+/g, 'عبد')
-    .replace(/ابو\s+/g, 'ابو')
-    .replace(/[\u064B-\u065F]/g, '');
+  return text.toString().toLowerCase().replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/عبد\s+/g, 'عبد').replace(/ابو\s+/g, 'ابو');
 }
 
-// ================= 1. HOLDINGS MODULE =================
+// ================= 5. HOLDINGS MODULE (FIREBASE CRUD) =================
 function renderHoldings() {
   const rawQ = document.getElementById('h-search').value;
   const q = normalizeArabic(rawQ); 
-  
+
   let list = dbHoldings.filter(r => {
-    const normName = normalizeArabic(r.name);
-    const normBasin = normalizeArabic(r.basin);
-    const nid = String(r.nationalId || '');
-    const id = String(r.id);
-    return id.includes(q) || normName.includes(q) || normBasin.includes(q) || nid.includes(q);
+    return String(r.id).includes(q) || normalizeArabic(r.name).includes(q) || normalizeArabic(r.basin).includes(q) || String(r.nationalId || '').includes(q);
   });
-  
+
   document.getElementById('h-count').textContent = dbHoldings.length;
   document.getElementById('h-area').textContent = dbHoldings.reduce((a,r) => a + areaToFeddan(r.feddan, r.qirat, r.sahm), 0).toFixed(2);
-  
+
   const wrap = document.getElementById('holdings-list');
-  
-  if (list.length === 0) {
-      wrap.innerHTML = `<div class="empty-state" style="text-align:center; padding:30px; color:#999;">لا توجد نتائج مطابقة للبحث</div>`;
-      return;
-  }
+  if (list.length === 0) { wrap.innerHTML = `<div style="text-align:center; padding:30px; color:#999;">لا توجد نتائج</div>`; return; }
 
   wrap.innerHTML = list.map(r => `
     <div class="card">
@@ -476,43 +387,28 @@ function renderHoldings() {
         <span style="background:var(--primary-light); color:var(--primary); padding:2px 8px; border-radius:10px; font-weight:bold;">رقم: ${r.id}</span>
       </div>
       <div style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">الرقم القومي: ${r.nationalId||'---'}</div>
-      
       <div style="display:flex; gap:10px; font-size:12px; font-weight:bold;">
-        <span style="border:1px solid #ddd; background:#fafafa; padding:6px; border-radius:6px; flex:1; text-align:center;">
-          🌾 ${r.feddan||0}ف, ${r.qirat||0}ق, ${r.sahm||0}س
-        </span>
-        <span style="border:1px solid #ddd; background:#fafafa; padding:6px; border-radius:6px; flex:1; text-align:center;">
-          📍 ${r.basin||'بدون حوض'}
-        </span>
+        <span style="border:1px solid #ddd; background:#fafafa; padding:6px; border-radius:6px; flex:1; text-align:center;">🌾 ${r.feddan||0}ف, ${r.qirat||0}ق, ${r.sahm||0}س</span>
+        <span style="border:1px solid #ddd; background:#fafafa; padding:6px; border-radius:6px; flex:1; text-align:center;">📍 ${r.basin||'بدون حوض'}</span>
       </div>
-
       <div class="action-row">
         <button class="btn btn-blue" onclick="openHoldingModal('${r.id}')">تعديل</button>
-        <button class="btn btn-gray" onclick="copyHolding('${r.id}')">نسخ 📋</button>
         ${currentUser.role === 'admin' ? `<button class="btn btn-red" onclick="delHolding('${r.id}')">حذف</button>` : ''}
       </div>
     </div>
   `).join('');
 }
 
-function copyHolding(id) {
-  const r = dbHoldings.find(x => String(x.id) === id);
-  const txt = `رقم الحيازة: ${r.id}\nالاسم: ${r.name}\nالمساحة: ${r.feddan||0}ف, ${r.qirat||0}ق, ${r.sahm||0}س`;
-  navigator.clipboard.writeText(txt).then(() => toast('تم النسخ بنجاح!'));
-}
-
 function openHoldingModal(id = null) {
   editId = id;
-  const r = id ? dbHoldings.find(x => String(x.id) === id) : {};
+  const r = id ? dbHoldings.find(x => String(x.id) === String(id)) : {};
+  // إنشاء رقم عشوائي جديد إذا كانت حيازة جديدة
   const nextId = dbHoldings.reduce((max, cur) => Math.max(max, parseInt(cur.id)||0), 0) + 1;
-  
+
   document.getElementById('modal-root').innerHTML = `
     <div class="modal-backdrop" onclick="closeModal()">
       <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <span>${id ? 'تعديل حيازة' : 'إضافة حيازة جديدة'}</span>
-          <span style="cursor:pointer; padding:5px;" onclick="closeModal()">✕</span>
-        </div>
+        <div class="modal-header"><span>${id ? 'تعديل حيازة' : 'إضافة حيازة جديدة'}</span><span style="cursor:pointer; padding:5px;" onclick="closeModal()">✕</span></div>
         <div class="modal-body">
           <div class="input-group"><label>رقم الحيازة</label><input type="text" id="fh-id" class="input-control" value="${id ? r.id : nextId}" ${id?'readonly':''}></div>
           <div class="input-group"><label>اسم الحائز</label><input type="text" id="fh-name" class="input-control" value="${r.name||''}"></div>
@@ -524,239 +420,50 @@ function openHoldingModal(id = null) {
             <div class="input-group" style="flex:1"><label>سهم</label><input type="number" id="fh-s" class="input-control" value="${r.sahm||0}"></div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-green" onclick="saveHolding()">حفظ البيانات</button>
-        </div>
+        <div class="modal-footer"><button class="btn btn-green" onclick="saveHolding()">حفظ في السحابة</button></div>
       </div>
     </div>`;
 }
 
 async function saveHolding() {
   const rec = {
-    id: document.getElementById('fh-id').value.trim(),
+    id: String(document.getElementById('fh-id').value.trim()),
     name: document.getElementById('fh-name').value.trim(),
     nationalId: document.getElementById('fh-nid').value.trim(),
     basin: document.getElementById('fh-basin').value.trim(),
-    feddan: document.getElementById('fh-f').value||0,
-    qirat: document.getElementById('fh-q').value||0,
-    sahm: document.getElementById('fh-s').value||0,
-    created: new Date().toISOString()
+    feddan: parseFloat(document.getElementById('fh-f').value||0),
+    qirat: parseFloat(document.getElementById('fh-q').value||0),
+    sahm: parseFloat(document.getElementById('fh-s').value||0),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
   
   if(!rec.name) return toast('الاسم مطلوب!');
   
-  if(!editId) {
-    if(dbHoldings.find(x => String(x.id) === rec.id)) return toast('الرقم موجود مسبقاً');
-    dbHoldings.push(rec);
-  } else {
-    const idx = dbHoldings.findIndex(x => String(x.id) === String(editId));
-    dbHoldings[idx] = rec;
+  toast('جاري الحفظ...');
+  try {
+    await db.collection("holdings").doc(rec.id).set(rec);
+    closeModal();
+    toast('تم الحفظ بنجاح!');
+  } catch(e) {
+    toast('حدث خطأ أثناء الحفظ');
+    console.error(e);
   }
-  
-  localStorage.setItem('local_holdings', JSON.stringify(dbHoldings));
-  closeModal(); renderHoldings(); toast('جاري المزامنة مع السحابة...');
-  
-  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'الحيازات', record: rec }) }); } catch(e){}
 }
 
 async function delHolding(id) {
-  if(!confirm('هل أنت متأكد من الحذف النهائي؟')) return;
-  dbHoldings = dbHoldings.filter(x => String(x.id) !== String(id));
-  localStorage.setItem('local_holdings', JSON.stringify(dbHoldings));
-  renderHoldings(); toast('جاري الحذف...');
-  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'الحيازات', id: String(id) }) }); } catch(e){}
+  if(!confirm('هل أنت متأكد من الحذف النهائي؟ لا يمكن التراجع!')) return;
+  toast('جاري الحذف...');
+  try {
+    await db.collection("holdings").doc(String(id)).delete();
+    toast('تم الحذف!');
+  } catch(e) { toast('حدث خطأ'); }
 }
 
-// ================= EXCEL & SMART NID SYNC =================
-function openExcelModal() {
-  document.getElementById('modal-root').innerHTML = `
-    <div class="modal-backdrop" onclick="closeModal()">
-      <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header"><span>البيانات والمزامنة (إكسيل)</span><span style="cursor:pointer; padding:5px;" onclick="closeModal()">✕</span></div>
-        <div class="modal-body" style="text-align:center;">
-          <button class="btn btn-blue" style="width:100%; margin-bottom:10px; padding:15px;" onclick="document.getElementById('file-input').click()">📥 استيراد حيازات جديدة</button>
-          <button class="btn btn-green" style="width:100%; margin-bottom:10px; padding:15px;" onclick="exportAllHoldings()">📤 تصدير كل الحيازات</button>
-          
-          <div style="margin-top:20px; border-top:1px solid var(--border-color); padding-top:15px;">
-             <h4 style="margin-bottom:10px; color:var(--primary);">مزامنة الأرقام القومية من شيت خارجي</h4>
-             <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">سيقوم النظام بالبحث عن تطابق (3 كلمات على الأقل) بين الأسماء، وسحب الرقم القومي تلقائياً.</p>
-             <button class="btn" style="background:#FF9800; width:100%; padding:15px;" onclick="document.getElementById('sync-nid-input').click()">🔄 اختيار شيت المزامنة</button>
-          </div>
-        </div>
-      </div>
-    </div>`;
-}
-
-function exportAllHoldings() {
-  if(!dbHoldings.length) return toast('لا توجد بيانات');
-  const wb = XLSX.utils.book_new();
-  const rows = dbHoldings.map(r => [r.id, r.name, r.nationalId||'', r.basin||'', r.feddan||0, r.qirat||0, r.sahm||0]);
-  const ws = XLSX.utils.aoa_to_sheet([['رقم الحيازة','اسم الحائز','الرقم القومي','اسم الحوض','فدان','قيراط','سهم'], ...rows]);
-  XLSX.utils.book_append_sheet(wb, ws, 'الحيازات');
-  XLSX.writeFile(wb, `حيازات_${new Date().getTime()}.xlsx`);
-}
-
-function handleFileSelect(e) {
-  const f = e.target.files[0]; if(!f) return; e.target.value='';
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
-    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-    toast(`تم قراءة ${rows.length-1} صف، سيتم رفعهم للسحابة قريباً`);
-  };
-  reader.readAsArrayBuffer(f);
-}
-
-let pendingNidUpdates = [];
-
-// دالة تفكيك الاسم إلى كلمات لمقارنتها
-function getWordMatches(name1, name2) {
-    const words1 = name1.split(' ').filter(w => w.length > 2); // استبعاد الكلمات القصيرة جداً مثل "بن"
-    const words2 = name2.split(' ');
-    let matchCount = 0;
-    words1.forEach(w => {
-        if(words2.includes(w)) matchCount++;
-    });
-    return matchCount;
-}
-
-function handleNidSync(e) {
-  const f = e.target.files[0]; if(!f) return; e.target.value='';
-  toast('جاري تحليل الشيت ومطابقة الأسماء الثلاثية...');
-  
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
-    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:''});
-    
-    if(rows.length < 2) return toast('الشيت فارغ');
-    
-    const headers = rows[0].map(h => String(h).trim().toLowerCase());
-    
-    let nameIdx = -1, nidIdx = -1;
-    const nameAliases = ['الاسم', 'اسم الحائز', 'اسم', 'name'];
-    const nidAliases = ['الرقم القومي', 'القومي', 'رقم قومي', 'رقم البطاقة', 'national id'];
-
-    for(let i=0; i<headers.length; i++) {
-        if(nameAliases.includes(headers[i])) nameIdx = i;
-        if(nidAliases.includes(headers[i])) nidIdx = i;
-    }
-
-    if(nameIdx === -1 || nidIdx === -1) {
-        return alert('لم يتم العثور على عمود "الاسم" أو "الرقم القومي" بشكل واضح في الصف الأول. يرجى تعديل أسماء الأعمدة في الإكسيل.');
-    }
-
-    pendingNidUpdates = [];
-    
-    // عملية المطابقة الذكية (3 كلمات فأكثر)
-    for(let i=1; i<rows.length; i++) {
-        const excelNameRaw = String(rows[i][nameIdx]).trim();
-        const excelNidRaw = String(rows[i][nidIdx]).trim();
-        
-        if(!excelNameRaw || !excelNidRaw) continue;
-        
-        const normExcelName = normalizeArabic(excelNameRaw);
-        
-        for(let j=0; j<dbHoldings.length; j++) {
-            const h = dbHoldings[j];
-            const normAppName = normalizeArabic(h.name);
-            
-            // المطابقة: يجب أن تتطابق 3 كلمات على الأقل بين الاسمين
-            const matches = getWordMatches(normAppName, normExcelName);
-            
-            if(matches >= 3) {
-                if(h.nationalId !== excelNidRaw) {
-                    pendingNidUpdates.push({
-                        id: h.id,
-                        oldName: h.name,
-                        excelName: excelNameRaw,
-                        newNid: excelNidRaw
-                    });
-                }
-                break; 
-            }
-        }
-    }
-    
-    showNidSyncConfirmation();
-  };
-  reader.readAsArrayBuffer(f);
-}
-
-function showNidSyncConfirmation() {
-    if(pendingNidUpdates.length === 0) {
-        alert('لم يتم العثور على أسماء (ثلاثية) متطابقة تحتاج لتحديث الرقم القومي.');
-        return;
-    }
-
-    let previewList = pendingNidUpdates.slice(0, 20).map(u => 
-        `<div style="font-size:12px; border-bottom:1px solid #eee; padding:5px 0; text-align:right;">
-            <b>برنامج:</b> ${u.oldName} <br>
-            <b>إكسيل:</b> <span style="color:var(--primary)">${u.excelName}</span> <br>
-            <b>القومي:</b> ${u.newNid}
-        </div>`
-    ).join('');
-
-    document.getElementById('modal-root').innerHTML = `
-    <div class="modal-backdrop" onclick="closeModal()">
-      <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header"><span>تأكيد مزامنة الأرقام القومية</span><span style="cursor:pointer;" onclick="closeModal()">✕</span></div>
-        <div class="modal-body">
-          <div style="background:var(--primary-light); color:var(--primary); padding:10px; border-radius:8px; text-align:center; font-weight:bold; margin-bottom:15px;">
-             تم العثور على ${pendingNidUpdates.length} تطابق (ثلاثي)!
-          </div>
-          <div style="max-height:200px; overflow-y:auto; background:#f9f9f9; padding:10px; border:1px solid #ddd; border-radius:5px;">
-             ${previewList}
-             ${pendingNidUpdates.length > 20 ? `<div style="text-align:center; color:#888; margin-top:5px;">...وغيرها</div>` : ''}
-          </div>
-          <p style="font-size:12px; color:var(--color-del); margin-top:10px;">سيتم تحديث الرقم القومي لهذه الأسماء. هل توافق؟</p>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-gray" onclick="closeModal()">إلغاء</button>
-          <button class="btn btn-green" onclick="confirmNidSync()">نعم، تحديث الأرقام</button>
-        </div>
-      </div>
-    </div>`;
-}
-
-async function confirmNidSync() {
-    closeModal();
-    toast('جاري تحديث الحيازات...');
-    
-    pendingNidUpdates.forEach(update => {
-        const idx = dbHoldings.findIndex(h => h.id === update.id);
-        if(idx !== -1) {
-            dbHoldings[idx].nationalId = update.newNid;
-        }
-    });
-    
-    localStorage.setItem('local_holdings', JSON.stringify(dbHoldings));
-    renderHoldings();
-    
-    let successCount = 0;
-    for(const update of pendingNidUpdates) {
-        const record = dbHoldings.find(h => h.id === update.id);
-        try { 
-            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'الحيازات', record: record }) }); 
-            successCount++;
-        } catch(e) {}
-    }
-    
-    toast(`تم تحديث ${successCount} سجل بنجاح!`);
-}
-
-function printHoldings() {
-  const win = window.open('', '', 'width=900,height=700');
-  let html = `<html dir="rtl"><head><style>body{font-family:Arial;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #000;padding:5px;text-align:center;}</style></head><body><h2>سجل الحيازات</h2><table><tr><th>رقم</th><th>الاسم</th><th>الرقم القومي</th><th>فدان</th><th>قيراط</th><th>سهم</th></tr>`;
-  dbHoldings.forEach(r => html += `<tr><td>${r.id}</td><td>${r.name}</td><td>${r.nationalId||'-'}</td><td>${r.feddan||0}</td><td>${r.qirat||0}</td><td>${r.sahm||0}</td></tr>`);
-  win.document.write(html + `</table></body></html>`); win.document.close(); setTimeout(()=>win.print(), 300);
-}
-
-// ================= 2. INVENTORY MODULE =================
+// ================= 6. INVENTORY MODULE (FIREBASE) =================
 function renderInventory() {
   const list = dbInventory.filter(x => x.category === currentInvCategory);
   let totalVal = 0;
-  
+
   const html = list.map(r => {
     const remaining = (parseFloat(r.start)||0) + (parseFloat(r.in)||0) - (parseFloat(r.cashOut)||0) - (parseFloat(r.creditOut)||0);
     totalVal += remaining * (parseFloat(r.price)||0);
@@ -775,24 +482,27 @@ function renderInventory() {
       </div>` : ''}
     </div>`;
   }).join('');
-  
+
   document.getElementById('inv-total-items').textContent = list.length;
   document.getElementById('inv-total-value').textContent = totalVal.toFixed(2);
-  document.getElementById('inventory-list').innerHTML = html || '<div class="empty-state" style="text-align:center; padding:30px; color:#999;">المخزن فارغ</div>';
+  document.getElementById('inventory-list').innerHTML = html || '<div style="text-align:center; padding:30px; color:#999;">المخزن فارغ</div>';
 }
 
 function openInventoryModal(id = null) {
   editId = id;
   const r = id ? dbInventory.find(x => String(x.id) === String(id)) : {};
+  const newId = id ? id : String(Date.now());
+  
   document.getElementById('modal-root').innerHTML = `
     <div class="modal-backdrop" onclick="closeModal()">
       <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header"><span>${id ? 'تعديل صنف' : 'إضافة صنف'} (${currentInvCategory})</span><span style="cursor:pointer; padding:5px;" onclick="closeModal()">✕</span></div>
+        <div class="modal-header"><span>${id ? 'تعديل صنف' : 'إضافة صنف'} (${currentInvCategory})</span><span style="cursor:pointer;" onclick="closeModal()">✕</span></div>
         <div class="modal-body">
+          <input type="hidden" id="fi-id" value="${newId}">
           <div class="input-group"><label>اسم الصنف</label><input type="text" id="fi-name" class="input-control" value="${r.name||''}"></div>
           <div style="display:flex; gap:10px;">
-            <div class="input-group" style="flex:1"><label>رصيد أول المدة</label><input type="number" id="fi-start" class="input-control" value="${r.start||0}"></div>
-            <div class="input-group" style="flex:1"><label>الكمية الواردة</label><input type="number" id="fi-in" class="input-control" value="${r.in||0}"></div>
+            <div class="input-group" style="flex:1"><label>رصيد أول</label><input type="number" id="fi-start" class="input-control" value="${r.start||0}"></div>
+            <div class="input-group" style="flex:1"><label>وارد</label><input type="number" id="fi-in" class="input-control" value="${r.in||0}"></div>
           </div>
           <div style="display:flex; gap:10px;">
             <div class="input-group" style="flex:1"><label>مباع نقدي</label><input type="number" id="fi-cash" class="input-control" value="${r.cashOut||0}"></div>
@@ -800,40 +510,129 @@ function openInventoryModal(id = null) {
           </div>
           <div class="input-group"><label>سعر الشراء للوحدة (ج.م)</label><input type="number" id="fi-price" class="input-control" value="${r.price||0}"></div>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-green" onclick="saveInventory()">حفظ التعديلات</button>
-        </div>
+        <div class="modal-footer"><button class="btn btn-green" onclick="saveInventory()">حفظ</button></div>
       </div>
     </div>`;
 }
 
 async function saveInventory() {
   const rec = {
-    id: editId || Date.now(),
+    id: document.getElementById('fi-id').value,
     category: currentInvCategory,
     name: document.getElementById('fi-name').value.trim(),
-    start: document.getElementById('fi-start').value||0,
-    in: document.getElementById('fi-in').value||0,
-    cashOut: document.getElementById('fi-cash').value||0,
-    creditOut: document.getElementById('fi-credit').value||0,
-    price: document.getElementById('fi-price').value||0,
+    start: parseFloat(document.getElementById('fi-start').value||0),
+    in: parseFloat(document.getElementById('fi-in').value||0),
+    cashOut: parseFloat(document.getElementById('fi-cash').value||0),
+    creditOut: parseFloat(document.getElementById('fi-credit').value||0),
+    price: parseFloat(document.getElementById('fi-price').value||0),
   };
   if(!rec.name) return toast('الاسم مطلوب');
-  
-  if(editId) { const idx = dbInventory.findIndex(x => String(x.id) === String(editId)); dbInventory[idx] = rec; }
-  else { dbInventory.push(rec); }
-  
-  localStorage.setItem('local_inventory', JSON.stringify(dbInventory));
-  closeModal(); renderInventory(); toast('جاري الحفظ بالسحابة...');
-  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المخازن', record: rec }) }); } catch(e){}
+
+  try {
+    await db.collection("inventory").doc(rec.id).set(rec);
+    closeModal(); toast('تم الحفظ');
+  } catch(e) { toast('خطأ في الحفظ'); }
 }
 
 async function delInventory(id) {
   if(!confirm('حذف الصنف نهائياً؟')) return;
-  dbInventory = dbInventory.filter(x => String(x.id) !== String(id));
-  localStorage.setItem('local_inventory', JSON.stringify(dbInventory));
-  renderInventory();
-  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'المخازن', id: String(id) }) }); } catch(e){}
+  try { await db.collection("inventory").doc(String(id)).delete(); toast('تم الحذف'); } catch(e){}
+}
+
+// ================= 7. HR & TREASURY =================
+function renderTreasury() {
+  let totalCashSalesValue = 0; let summaryHtml = '';
+  ['أسمدة', 'مبيدات', 'مغذيات'].forEach(cat => {
+    const items = dbInventory.filter(x => x.category === cat);
+    let catCash = 0;
+    items.forEach(i => catCash += (parseFloat(i.cashOut)||0) * (parseFloat(i.price)||0)); 
+    totalCashSalesValue += catCash;
+    summaryHtml += `<div style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:8px;"><div class="flex-between"><b>مبيعات ${cat} (نقدية)</b> <span style="color:var(--primary); font-weight:bold;">${catCash.toFixed(2)} ج</span></div></div>`;
+  });
+  document.getElementById('treasury-total').textContent = totalCashSalesValue.toFixed(2) + ' ج.م';
+  document.getElementById('treasury-summary').innerHTML = summaryHtml;
+}
+
+function renderHr(tab) {
+  currentHrTab = tab;
+  const list = dbHr.filter(x => x.type === tab);
+  document.getElementById('hr-list').innerHTML = list.map(r => `
+    <div class="card flex-between">
+      <div><b style="font-size:16px;">${r.name}</b><br><span style="font-size:13px; color:var(--text-muted);">${r.role}</span>
+        ${tab === 'employee' ? `<div style="font-size:12px; color:var(--primary); font-weight:bold;">الراتب: ${r.salary} ج</div>` : ''}
+      </div>
+      ${currentUser.role === 'admin' ? `<div><button class="btn-icon" style="background:var(--color-del);" onclick="delHr('${r.id}')">🗑</button></div>` : ''}
+    </div>
+  `).join('') || '<div style="text-align:center; padding:30px; color:#999;">لا يوجد بيانات</div>';
+}
+
+function openHrModal() {
+  document.getElementById('modal-root').innerHTML = `
+    <div class="modal-backdrop" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header"><span>إضافة ${currentHrTab === 'employee' ? 'موظف' : 'عضو مجلس إدارة'}</span><span style="cursor:pointer;" onclick="closeModal()">✕</span></div>
+        <div class="modal-body">
+          <div class="input-group"><label>الاسم</label><input type="text" id="fhr-name" class="input-control"></div>
+          ${currentHrTab === 'employee' ? `
+            <div class="input-group"><label>المسمى الوظيفي</label><input type="text" id="fhr-role" class="input-control"></div>
+            <div class="input-group"><label>الراتب الأساسي</label><input type="number" id="fhr-salary" class="input-control"></div>
+          ` : `
+            <div class="input-group"><label>الصفة</label>
+              <select id="fhr-role" class="input-control">
+                <option value="رئيس مجلس الإدارة">رئيس مجلس الإدارة</option><option value="عضو مجلس إدارة">عضو مجلس إدارة</option>
+                <option value="أمين الصندوق">أمين الصندوق</option><option value="سكرتير">سكرتير</option>
+              </select>
+            </div>
+          `}
+        </div>
+        <div class="modal-footer"><button class="btn btn-green" onclick="saveHr()">حفظ</button></div>
+      </div>
+    </div>`;
+}
+
+async function saveHr() {
+  const rec = {
+    id: String(Date.now()), type: currentHrTab,
+    name: document.getElementById('fhr-name').value.trim(),
+    role: document.getElementById('fhr-role').value,
+    salary: currentHrTab === 'employee' ? document.getElementById('fhr-salary').value : null
+  };
+  if(!rec.name) return toast('الاسم مطلوب');
+  try { await db.collection("hr").doc(rec.id).set(rec); closeModal(); toast('تم الحفظ'); } catch(e){}
+}
+async function delHr(id) { if(!confirm('تأكيد الحذف؟')) return; try { await db.collection("hr").doc(String(id)).delete(); toast('تم الحذف'); } catch(e){} }
+
+// ================= EXCEL SYNC (MODIFIED FOR FIREBASE) =================
+function openExcelModal() {
+  document.getElementById('modal-root').innerHTML = `
+    <div class="modal-backdrop" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header"><span>البيانات والمزامنة (إكسيل)</span><span style="cursor:pointer;" onclick="closeModal()">✕</span></div>
+        <div class="modal-body" style="text-align:center;">
+          <button class="btn btn-green" style="width:100%; margin-bottom:10px; padding:15px;" onclick="exportAllHoldings()">📤 تصدير كل الحيازات</button>
+          <div style="margin-top:20px; border-top:1px solid var(--border-color); padding-top:15px;">
+             <h4 style="margin-bottom:10px; color:var(--primary);">مزامنة الأرقام القومية من شيت خارجي</h4>
+             <button class="btn" style="background:#FF9800; width:100%; padding:15px;" onclick="document.getElementById('sync-nid-input').click()">🔄 اختيار شيت المزامنة</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function exportAllHoldings() {
+  if(!dbHoldings.length) return toast('لا توجد بيانات');
+  const wb = XLSX.utils.book_new();
+  const rows = dbHoldings.map(r => [r.id, r.name, r.nationalId||'', r.basin||'', r.feddan||0, r.qirat||0, r.sahm||0]);
+  const ws = XLSX.utils.aoa_to_sheet([['رقم الحيازة','اسم الحائز','الرقم القومي','اسم الحوض','فدان','قيراط','سهم'], ...rows]);
+  XLSX.utils.book_append_sheet(wb, ws, 'الحيازات');
+  XLSX.writeFile(wb, `حيازات_${new Date().getTime()}.xlsx`);
+}
+
+function printHoldings() {
+  const win = window.open('', '', 'width=900,height=700');
+  let html = `<html dir="rtl"><head><style>body{font-family:Arial;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #000;padding:5px;text-align:center;}</style></head><body><h2>سجل الحيازات</h2><table><tr><th>رقم</th><th>الاسم</th><th>الرقم القومي</th><th>فدان</th><th>قيراط</th><th>سهم</th></tr>`;
+  dbHoldings.forEach(r => html += `<tr><td>${r.id}</td><td>${r.name}</td><td>${r.nationalId||'-'}</td><td>${r.feddan||0}</td><td>${r.qirat||0}</td><td>${r.sahm||0}</td></tr>`);
+  win.document.write(html + `</table></body></html>`); win.document.close(); setTimeout(()=>win.print(), 300);
 }
 
 function printInventory() {
@@ -847,179 +646,43 @@ function printInventory() {
   win.document.write(html + `</table></body></html>`); win.document.close(); setTimeout(()=>win.print(), 300);
 }
 
-// ================= 3. TREASURY MODULE =================
-function renderTreasury() {
-  let totalCashSalesValue = 0;
-  let summaryHtml = '';
-  
-  ['أسمدة', 'مبيدات', 'مغذيات'].forEach(cat => {
-    const items = dbInventory.filter(x => x.category === cat);
-    let catCash = 0;
-    items.forEach(i => catCash += (parseFloat(i.cashOut)||0) * (parseFloat(i.price)||0)); 
+// دالة المزامنة من الإكسيل (Smart NID Sync)
+function handleNidSync(e) {
+  const f = e.target.files[0]; if(!f) return; e.target.value='';
+  toast('جاري تحليل الشيت...');
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:''});
+    if(rows.length < 2) return toast('الشيت فارغ');
     
-    totalCashSalesValue += catCash;
-    summaryHtml += `
-      <div style="background:var(--surface); border:1px solid var(--border-color); padding:10px; margin-bottom:10px; border-radius:8px;">
-        <div class="flex-between"><b>مبيعات ${cat} (نقدية)</b> <span style="color:var(--primary); font-weight:bold;">${catCash.toFixed(2)} ج</span></div>
-      </div>
-    `;
-  });
-  
-  document.getElementById('treasury-total').textContent = totalCashSalesValue.toFixed(2) + ' ج.م';
-  document.getElementById('treasury-summary').innerHTML = summaryHtml;
-}
-
-// ================= 4. HR MODULE =================
-function renderHr(tab) {
-  currentHrTab = tab;
-  const list = dbHr.filter(x => x.type === tab);
-  const wrap = document.getElementById('hr-list');
-  
-  wrap.innerHTML = list.map(r => `
-    <div class="card flex-between">
-      <div>
-        <b style="font-size:16px;">${r.name}</b><br>
-        <span style="font-size:13px; color:var(--text-muted);">${r.role}</span>
-        ${tab === 'employee' ? `<div style="font-size:12px; color:var(--primary); font-weight:bold;">الراتب: ${r.salary} ج</div>` : ''}
-      </div>
-      ${currentUser.role === 'admin' ? `
-      <div>
-        <button class="btn-icon" style="background:var(--color-del);" onclick="delHr('${r.id}')">🗑</button>
-      </div>` : ''}
-    </div>
-  `).join('') || '<div class="empty-state" style="text-align:center; padding:30px; color:#999;">لا يوجد بيانات</div>';
-}
-
-function openHrModal() {
-  document.getElementById('modal-root').innerHTML = `
-    <div class="modal-backdrop" onclick="closeModal()">
-      <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header"><span>إضافة ${currentHrTab === 'employee' ? 'موظف' : 'عضو مجلس إدارة'}</span><span style="cursor:pointer; padding:5px;" onclick="closeModal()">✕</span></div>
-        <div class="modal-body">
-          <div class="input-group"><label>الاسم</label><input type="text" id="fhr-name" class="input-control"></div>
-          ${currentHrTab === 'employee' ? `
-            <div class="input-group"><label>المسمى الوظيفي</label><input type="text" id="fhr-role" class="input-control"></div>
-            <div class="input-group"><label>الراتب الأساسي</label><input type="number" id="fhr-salary" class="input-control"></div>
-          ` : `
-            <div class="input-group"><label>الصفة</label>
-              <select id="fhr-role" class="input-control">
-                <option value="رئيس مجلس الإدارة">رئيس مجلس الإدارة</option>
-                <option value="عضو مجلس إدارة">عضو مجلس إدارة</option>
-                <option value="أمين الصندوق">أمين الصندوق</option>
-                <option value="سكرتير">سكرتير</option>
-              </select>
-            </div>
-          `}
-        </div>
-        <div class="modal-footer"><button class="btn btn-green" onclick="saveHr()">حفظ البيانات</button></div>
-      </div>
-    </div>`;
-}
-
-async function saveHr() {
-  const rec = {
-    id: Date.now(),
-    type: currentHrTab,
-    name: document.getElementById('fhr-name').value.trim(),
-    role: document.getElementById('fhr-role').value,
-    salary: currentHrTab === 'employee' ? document.getElementById('fhr-salary').value : null
-  };
-  if(!rec.name) return toast('الاسم مطلوب');
-  dbHr.push(rec); 
-  
-  localStorage.setItem('local_hr', JSON.stringify(dbHr));
-  closeModal(); renderHr(currentHrTab); toast('جاري الحفظ...');
-  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'شئون_العاملين', record: rec }) }); } catch(e){}
-}
-
-async function delHr(id) { 
-  if(!confirm('تأكيد الحذف؟')) return;
-  dbHr = dbHr.filter(x => String(x.id) !== String(id)); 
-  localStorage.setItem('local_hr', JSON.stringify(dbHr));
-  renderHr(currentHrTab); 
-  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'شئون_العاملين', id: String(id) }) }); } catch(e){}
-}
-
-// ================= 5. SETTINGS / USERS MODULE =================
-function renderUsers() {
-  const wrap = document.getElementById('users-list');
-  wrap.innerHTML = dbUsers.map(u => `
-    <div class="card flex-between">
-      <div>
-        <b style="font-size:16px;">${u.name}</b> (${u.user})<br>
-        <span style="font-size:12px; background:${u.role==='admin'?'var(--primary-light)':'#eee'}; color:${u.role==='admin'?'var(--primary)':'#666'}; padding:2px 6px; border-radius:4px;">${u.role==='admin'?'مدير النظام':'موظف عادي'}</span>
-      </div>
-      <div style="display:flex; gap:6px;">
-        <button class="btn-icon" style="background:var(--color-edit);" onclick="openUserModal('${u.id}')">✏️</button>
-        ${u.user !== 'admin' ? `<button class="btn-icon" style="background:var(--color-del);" onclick="delUser('${u.id}')">🗑</button>` : ''}
-      </div>
-    </div>
-  `).join('');
-}
-
-function openUserModal(id = null) {
-  editId = id;
-  const u = id ? dbUsers.find(x => String(x.id) === String(id)) : {};
-  document.getElementById('modal-root').innerHTML = `
-    <div class="modal-backdrop" onclick="closeModal()">
-      <div class="modal" onclick="event.stopPropagation()">
-        <div class="modal-header"><span>${id ? 'تعديل مستخدم' : 'مستخدم جديد'}</span><span style="cursor:pointer; padding:5px;" onclick="closeModal()">✕</span></div>
-        <div class="modal-body">
-          <div class="input-group"><label>الاسم الكامل</label><input type="text" id="fu-name" class="input-control" value="${u.name||''}"></div>
-          <div class="input-group"><label>اسم المستخدم (للدخول)</label><input type="text" id="fu-user" class="input-control" dir="ltr" value="${u.user||''}"></div>
-          <div class="input-group"><label>كلمة المرور</label><input type="text" id="fu-pass" class="input-control" dir="ltr" value="${u.pass||''}"></div>
-          <div class="input-group"><label>الصلاحية</label>
-            <select id="fu-role" class="input-control" ${u.user === 'admin' ? 'disabled' : ''}>
-              <option value="user" ${u.role==='user'?'selected':''}>موظف (إدخال حيازات فقط)</option>
-              <option value="admin" ${u.role==='admin'?'selected':''}>مدير (صلاحيات كاملة)</option>
-            </select>
-          </div>
-        </div>
-        <div class="modal-footer"><button class="btn btn-green" onclick="saveUser()">${id ? 'تحديث' : 'حفظ المستخدم'}</button></div>
-      </div>
-    </div>`;
-}
-
-async function saveUser() {
-  const rec = {
-    id: editId || String(Date.now()),
-    name: String(document.getElementById('fu-name').value).trim(),
-    user: String(document.getElementById('fu-user').value).trim(),
-    pass: String(document.getElementById('fu-pass').value).trim(),
-    role: String(document.getElementById('fu-role').value)
-  };
-  
-  if(!rec.user || !rec.pass) return toast('بيانات الدخول مطلوبة');
-  
-  if(!editId) {
-    if(dbUsers.find(x => x.user === rec.user)) return toast('اسم المستخدم موجود مسبقاً');
-    dbUsers.push(rec); 
-  } else {
-    const idx = dbUsers.findIndex(x => String(x.id) === String(editId));
-    if(idx > -1) dbUsers[idx] = rec; else dbUsers.push(rec);
-
-    if(currentUser && String(currentUser.id) === String(editId)) {
-        currentUser = rec;
-        localStorage.setItem('session_user', JSON.stringify(currentUser));
-        updateAdminVisibility(); 
+    let pendingUpdates = [];
+    // افترضنا أن الأعمدة فيها "الاسم" و "الرقم القومي" بنفس المنطق القديم
+    for(let i=1; i<rows.length; i++) {
+       const xlName = String(rows[i][0]).trim(); // عمود الاسم
+       const xlNid = String(rows[i][1]).trim();  // عمود الرقم القومي
+       
+       if(!xlName || !xlNid) continue;
+       
+       const matched = dbHoldings.find(h => normalizeArabic(h.name).includes(normalizeArabic(xlName.split(' ')[0])));
+       if(matched && matched.nationalId !== xlNid) {
+           pendingUpdates.push({ id: matched.id, newNid: xlNid });
+       }
     }
-  }
-  
-  localStorage.setItem('local_users', JSON.stringify(dbUsers));
-  closeModal(); renderUsers(); toast('جاري الحفظ...');
-  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'save', table: 'المستخدمين', record: rec }) }); } catch(e){}
+    
+    if(pendingUpdates.length > 0) {
+        if(confirm(`تم إيجاد ${pendingUpdates.length} تحديث، هل تريد رفعهم للسحابة؟`)) {
+            pendingUpdates.forEach(update => {
+                db.collection("holdings").doc(String(update.id)).update({ nationalId: update.newNid });
+            });
+            toast('تم إرسال التحديثات للسيرفر!');
+        }
+    } else {
+        toast('لم يتم إيجاد أسماء متطابقة.');
+    }
+  };
+  reader.readAsArrayBuffer(f);
 }
-
-async function delUser(id) { 
-  if(!confirm('حذف هذا المستخدم من النظام؟')) return;
-  dbUsers = dbUsers.filter(x => String(x.id) !== String(id)); 
-  localStorage.setItem('local_users', JSON.stringify(dbUsers));
-  renderUsers(); 
-  try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', table: 'المستخدمين', id: String(id) }) }); } catch(e){}
-}
-
-// ================= BOOTSTRAP TRIGGER =================
-bootApp();
 </script>
 </body>
 </html>
